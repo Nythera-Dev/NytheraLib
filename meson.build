@@ -577,6 +577,7 @@ install_headers(
   'src/app/main_loop.h',
   'src/app/poll_source.h',
   'src/app/single_instance_lock.h',
+  'src/app/timer_poll_source.h',
   subdir: 'nythera-lib/app',
 )
 
@@ -610,6 +611,7 @@ install_headers(
   'src/config/config_migrations.h',
   'src/config/config_notification_sink.h',
   'src/config/config_origins.h',
+  'src/config/config_poll_source.h',
   'src/config/config_service.h',
   'src/config/config_types.h',
   'src/config/state_store.h',
@@ -969,6 +971,7 @@ install_headers(
 
 install_headers(
   'src/wayland/ext_foreign_toplevels.h',
+  'src/wayland/key_repeat_poll_source.h',
   'src/wayland/layer_surface.h',
   'src/wayland/native_data_transfer.h',
   'src/wayland/output_probe.h',
