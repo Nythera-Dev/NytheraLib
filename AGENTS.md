@@ -20,6 +20,8 @@ Repository-specific guidance supplementing global agent instructions. Follow glo
 - Before a targeted Meson test, use `meson test -C build-debug --list` once if the exact test name is unknown, then run `meson test -C build-debug <test-name> --print-errorlogs`. Add a focused isolated regression test when protecting a deterministic contract not already covered; do not invent arbitrary tests merely to tick a box.
 - **Review before finishing:** Run `git diff --check`, review the changed-file list and focused diff, check affected architectural invariants, and report actual checks run, scope, and unresolved items. Never cite unverified claims or inferred test passes.
 
+- **Runtime compatibility during coordinated changes:** Before changing shared assets, resource layouts, public library interfaces or other files consumed at runtime, account for currently running applications and any subprocesses/helpers they may launch. Preserve compatibility with the active runtime until the coordinated build, installation and authorised restart are complete. If compatibility cannot be maintained, stop before the incompatible change and agree a safe transition and recovery plan with the maintainer. Validate affected runtime paths, including security-critical helpers where relevant, before removing temporary compatibility measures. Never weaken authentication or other safety checks to conceal a deployment mismatch.
+
 ### Authorisation and Git safety
 
 - Do not modify live user configuration (`~/.config/nythera`, `~/.local/state/nythera`), install host packages, modify system configuration, write to system prefixes (`/usr`, `/usr/local`), restart running applications/services, commit, or push without explicit authorisation.
