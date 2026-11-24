@@ -1,0 +1,223 @@
+{
+  "clipboard": {
+    "title": "클립보드"
+  },
+  "common": {
+    "actions": {
+      "apply": "적용",
+      "cancel": "취소"
+    },
+    "states": {
+      "auto": "자동",
+      "off": "꺼짐"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "하루 종일",
+      "events": "일정",
+      "no-events": "일정 없음",
+      "today": "오늘"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "소스 파일에서 {path}를 업데이트하세요.  Nythera는 변경 사항을 일시적으로 적용하고 있습니다. nythera config validate를 실행하여 필요한 변경 사항을 확인하세요",
+      "config-migration-title": "설정 업데이트 필요",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "이 단축키는 수정자 키 없이 단일 키만 허용합니다.",
+      "keybind-invalid-printable": "인쇄 가능한 키(문자, 숫자, 기호)는 Ctrl 또는 Alt와 같은 수정자 키가 필요합니다.",
+      "keybind-invalid-super": "Super/Windows 키는 쉘 단축키에 사용할 수 없습니다.",
+      "keybind-invalid-title": "단축키 사용 불가"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "바: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "첫 번째 위젯 뒤",
+        "start": "첫 번째 위젯 전"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "간결",
+          "full": "전체",
+          "none": "없음"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "끝",
+        "none": "없음",
+        "start": "시작"
+      },
+      "edge": {
+        "bottom": "하단",
+        "left": "좌측",
+        "right": "우측",
+        "top": "상단"
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "모두",
+          "none": "없음",
+          "official": "공식"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "연결됨",
+          "floating": "플로팅"
+        },
+        "panel-transparency": {
+          "glass": "유리",
+          "soft": "부드럽게",
+          "solid": "불투명"
+        },
+        "password-style": {
+          "filled-circles": "채워진 원",
+          "random-icons": "무작위 아이콘"
+        },
+        "shadow-direction": {
+          "center": "중앙",
+          "down": "하단",
+          "down-left": "좌측 하단",
+          "down-right": "우측 하단",
+          "left": "좌측",
+          "right": "우측",
+          "up": "상단",
+          "up-left": "좌측 상단",
+          "up-right": "우측 상단"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "어두움",
+          "light": "밝음"
+        },
+        "source": {
+          "built-in": "기본 제공",
+          "community": "커뮤니티",
+          "custom": "사용자 정의",
+          "wallpaper": "배경화면"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "중앙",
+          "crop": "자르기",
+          "fit": "맞춤",
+          "repeat": "반복",
+          "span": "스팬",
+          "stretch": "늘리기"
+        },
+        "order": {
+          "alphabetical": "알파벳 순",
+          "random": "무작위"
+        },
+        "transition": {
+          "disc": "디스크",
+          "fade": "페이드",
+          "honeycomb": "벌집",
+          "stripes": "줄무늬",
+          "wipe": "닦아내기",
+          "zoom": "줌"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "기본값",
+        "destructive": "위험",
+        "ghost": "고스트",
+        "outline": "외곽선",
+        "primary": "기본",
+        "secondary": "보조"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "1분 미만",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "알 수 없음"
+    },
+    "relative": {
+      "days-ago": "{count}일 전",
+      "days-ago-plural": "{count}일 전",
+      "hours-ago": "{count}시간 전",
+      "hours-ago-plural": "{count}시간 전",
+      "just-now": "방금",
+      "minutes-ago": "{count}분 전",
+      "minutes-ago-plural": "{count}분 전"
+    },
+    "units": {
+      "day": "{count}일",
+      "day-plural": "{count}일",
+      "hour": "{count}시간",
+      "hour-plural": "{count}시간",
+      "minute": "{count}분",
+      "minute-plural": "{count}분"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "결과 없음",
+        "placeholder": "검색…"
+      },
+      "select": {
+        "placeholder": "옵션 선택"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "색상"
+      },
+      "file": {
+        "actions": {
+          "open": "열기",
+          "save": "저장",
+          "select-folder": "폴더 선택"
+        },
+        "empty-filtered": "현재 필터와 일치하는 파일 없음",
+        "entry": {
+          "folder": "폴더"
+        },
+        "filename-placeholder": "파일명",
+        "filter-placeholder": "필터…",
+        "sort": {
+          "ascending": "↑",
+          "date": "날짜",
+          "descending": "↓",
+          "name": "이름",
+          "size": "크기"
+        },
+        "title": {
+          "default": "파일 대화상자",
+          "open": "파일 열기",
+          "save": "파일 저장",
+          "select-folder": "폴더 선택"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "모두",
+        "search-placeholder": "글리프 검색…",
+        "title": "글리프 선택"
+      }
+    }
+  }
+}

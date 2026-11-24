@@ -1,0 +1,52 @@
+{
+  "clipboard": {
+    "title": "Urklipp"
+  },
+  "common": {
+    "actions": {
+      "apply": "Applicera",
+      "cancel": "Avbryt"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Av"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Hela dagen",
+      "events": "Händelser",
+      "no-events": "Inga händelser.",
+      "today": "Idag"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "keybind-app": "Nythera"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Bar: {name}"
+      }
+    },
+    "options": {
+      "control-center": {
+        "sidebar": {
+          "compact": "Kompakt"
+        }
+      }
+    }
+  },
+  "ui": {
+    "dialogs": {
+      "file": {
+        "filename-placeholder": "Filnamn",
+        "sort": {
+          "name": "Namn"
+        }
+      }
+    }
+  }
+}

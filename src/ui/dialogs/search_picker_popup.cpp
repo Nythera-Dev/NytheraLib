@@ -218,7 +218,7 @@ bool SearchPickerPopup::openNativeWindow(
       .maxHeight = outputHeight,
       .parent = request.nativeParent,
       .title = request.title,
-      .appId = "dev.nythera.FileManager.OpenWith"
+      .appId = !request.nativeAppId.empty() ? request.nativeAppId.c_str() : nullptr
   };
   if (!m_nativeWindow->initialize(output != nullptr ? output->output : nullptr, config)) {
     m_nativeWindow.reset();

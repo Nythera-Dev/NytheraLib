@@ -1,0 +1,302 @@
+{
+  "clipboard": {
+    "title": "Буфер обмена"
+  },
+  "common": {
+    "actions": {
+      "apply": "Применить",
+      "cancel": "Отменить"
+    },
+    "states": {
+      "auto": "Авто",
+      "off": "Выкл."
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Весь день",
+      "events": "События",
+      "hide-past-events": "Скрыть прошлые события: {count}",
+      "hide-past-events-plural": "Скрыть прошлые события: {count}",
+      "no-events": "Нет событий.",
+      "show-past-events": "Показать прошлые события: {count}",
+      "show-past-events-plural": "Показать прошлые события: {count}",
+      "today": "Сегодня"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Обновите {path} в исходном файле. Nythera применяет эту замену временно. Выполните «nythera config validate», чтобы просмотреть список всех необходимых изменений.",
+      "config-migration-title": "Требуется обновление конфигурации",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Это сочетание клавиш принимает одну клавишу без модификаторов.",
+      "keybind-invalid-printable": "Печатные клавиши (буквы, цифры, символы) требуют модификатор, например Ctrl или Alt.",
+      "keybind-invalid-super": "Клавишу Super/Windows нельзя использовать в сочетаниях клавиш командной строки.",
+      "keybind-invalid-title": "Недопустимое сочетание клавиш"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Панель: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "После первого виджета",
+        "start": "Перед первым виджетом"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Компактная",
+          "full": "Полная",
+          "none": "Нет"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "В конце",
+        "none": "Нет",
+        "start": "В начале"
+      },
+      "edge": {
+        "bottom": "Снизу",
+        "left": "Слева",
+        "right": "Справа",
+        "top": "Сверху"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Алмаз",
+          "disc": "Диск",
+          "fade": "Плавное исчезновение",
+          "golden": "Золотой",
+          "honeycomb": "Соты",
+          "melt": "Растопить",
+          "pixel": "Пиксель",
+          "stripes": "Полосы",
+          "vortex": "Вихрь",
+          "wipe": "Шторка",
+          "zoom": "Масштабирование"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Все",
+          "none": "Нет",
+          "official": "Официальные"
+        }
+      },
+      "screenshot": {
+        "format": {
+          "jpeg": "JPEG",
+          "jxl": "JPEG XL",
+          "png": "PNG",
+          "webp": "WebP"
+        },
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "Ничего",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "Все",
+          "categories": "Категорий",
+          "pinned": "Закреплено",
+          "recent": "Недавние"
+        },
+        "launcher-layout": {
+          "full": "Расширенный",
+          "simple": "Простой"
+        },
+        "launcher-search-position": {
+          "bottom": "Снизу",
+          "top": "Сверху"
+        },
+        "panel-placement": {
+          "attached": "Прикреплённая",
+          "floating": "Плавающая"
+        },
+        "panel-transparency": {
+          "glass": "Стекло",
+          "soft": "Мягкая",
+          "solid": "Сплошная"
+        },
+        "password-style": {
+          "filled-circles": "Заполненные круги",
+          "random-icons": "Случайные значки"
+        },
+        "shadow-direction": {
+          "center": "По центру",
+          "down": "Вниз",
+          "down-left": "Вниз влево",
+          "down-right": "Вниз вправо",
+          "left": "Влево",
+          "right": "Вправо",
+          "up": "Вверх",
+          "up-left": "Вверх влево",
+          "up-right": "Вверх вправо"
+        },
+        "window-switcher-style": {
+          "carousel": "Карусель",
+          "compact": "Компактный"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Тёмная",
+          "light": "Светлая"
+        },
+        "shell-mode": {
+          "follow": "Следовать"
+        },
+        "source": {
+          "built-in": "Встроенная",
+          "community": "Сообщество",
+          "custom": "Пользовательская",
+          "wallpaper": "Обои"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "По центру",
+          "crop": "Обрезка",
+          "fit": "Вписать",
+          "repeat": "Повтор",
+          "span": "Охватить",
+          "stretch": "Растянуть"
+        },
+        "order": {
+          "alphabetical": "По алфавиту",
+          "random": "Случайно"
+        },
+        "transition": {
+          "diamond": "Алмаз",
+          "disc": "Диск",
+          "fade": "Плавное исчезновение",
+          "golden": "Золотой",
+          "honeycomb": "Соты",
+          "melt": "Растопить",
+          "pixel": "Пиксель",
+          "stripes": "Полосы",
+          "vortex": "Вихрь",
+          "wipe": "Шторка",
+          "zoom": "Масштабирование"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "По умолчанию",
+        "destructive": "Опасная",
+        "ghost": "Призрак",
+        "outline": "Контур",
+        "primary": "Основная",
+        "secondary": "Вторичная"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1 мин",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Неизвестный"
+    },
+    "relative": {
+      "days-ago": "{count} дн. назад",
+      "days-ago-plural": "{count} дн. назад",
+      "hours-ago": "{count} ч назад",
+      "hours-ago-plural": "{count} ч назад",
+      "just-now": "только что",
+      "minutes-ago": "{count} мин назад",
+      "minutes-ago-plural": "{count} мин назад"
+    },
+    "units": {
+      "day": "{count} день",
+      "day-plural": "{count} дней",
+      "hour": "{count} час",
+      "hour-plural": "{count} часов",
+      "minute": "{count} минута",
+      "minute-plural": "{count} минут"
+    }
+  },
+  "ui": {
+    "controls": {
+      "key-names": {
+        "backspace": "Backspace",
+        "delete": "Удалить",
+        "down": "Вниз",
+        "end": "Конец",
+        "enter": "Ввод",
+        "escape": "Escape",
+        "home": "Начало",
+        "insert": "Insert",
+        "left": "Влево",
+        "numpad-enter": "Enter на цифровом блоке",
+        "page-down": "Страница вниз",
+        "page-up": "Страница вверх",
+        "right": "Вправо",
+        "space": "Пробел",
+        "tab": "Tab",
+        "up": "Вверх"
+      },
+      "search-picker": {
+        "empty": "Нет результатов",
+        "placeholder": "Поиск…"
+      },
+      "select": {
+        "placeholder": "Выберите вариант"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "copy": "Скопировать цветовой код в текущем формате",
+        "title": "Цвет"
+      },
+      "file": {
+        "actions": {
+          "open": "Открыть",
+          "save": "Сохранить",
+          "select-folder": "Выбрать папку"
+        },
+        "empty-filtered": "Нет файлов, соответствующих текущему фильтру",
+        "entry": {
+          "folder": "Папка"
+        },
+        "filename-placeholder": "Имя файла",
+        "filter-placeholder": "Фильтр…",
+        "sort": {
+          "ascending": "↑",
+          "date": "Дата",
+          "descending": "↓",
+          "name": "Имя",
+          "size": "Размер"
+        },
+        "title": {
+          "default": "Диалоговое окно файла",
+          "open": "Открыть файл",
+          "save": "Сохранить файл",
+          "select-folder": "Выбрать папку"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Все",
+        "search-placeholder": "Поиск глифов…",
+        "title": "Выбрать глиф"
+      }
+    }
+  }
+}

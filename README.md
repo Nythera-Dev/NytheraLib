@@ -14,7 +14,13 @@ just build
 just install debug
 ```
 
-Other modes (`release`, `asan`) and maintenance recipes (`uninstall`, `clean`, `rebuild`, `format-code-check`, `lint`) follow the same mode conventions as Nythera Shell and Nythera Files.
+Other modes (`release`, `asan`) and maintenance recipes (`test`, `uninstall`, `clean`, `rebuild`, `format-code-check`, `lint`) follow the same mode conventions as Nythera Shell and Nythera Files.
+
+To build and run NytheraLib's standalone unit test suite:
+
+```sh
+just test
+```
 
 Equivalent manual Meson commands for the user-local prefix:
 
@@ -30,8 +36,9 @@ Meson installs these files under the specified prefix:
 
 - `lib/libnythera_lib.so.0.1.0`, with SONAME `libnythera_lib.so.0`
 - `lib/libnythera_lib.so.0` and `lib/libnythera_lib.so` symlinks
-- `lib/pkgconfig/nythera-lib.pc`
+- `lib/pkgconfig/nythera-lib.pc` (including `assetsdir`)
 - `include/nythera-lib/`, with shared C++ and Wayland protocol headers
+- `share/nythera-lib/assets/`, with shared fonts (`NytheraDisplay-Regular.ttf`, `nythera-tabler.ttf`), Tabler glyph metadata (`tabler.json`), and shared library component translations (`translations/*.json`)
 
 ## Coordinated development and rebuild discipline (`0.1.x`)
 
@@ -46,4 +53,4 @@ Because NytheraLib exports a wide C++23 header surface under a fixed `soversion:
 5. **When running applications must restart:** Already-running processes keep the previously loaded `libnythera_lib.so.0` mapped in memory. Restart `nythera` or `nythera-file-manager` after reinstalling `nythera-lib` (and after rebuilding the consumer when headers/ABI changed) to exercise updated code.
 6. **Risks of stale libraries or headers:** Forgetting `just install debug` after editing `nythera-lib` causes consumers to compile against stale installed headers and test/run against the old shared library. Conversely, reinstalling `nythera-lib` after a header layout change without rebuilding Shell and Files risks ODR violations, symbol errors, or memory corruption/crashes at runtime.
 
-The applications supply their own asset bundles and configure their own asset lookup paths at startup.
+NytheraLib owns and resolves the shared fonts, Tabler glyph metadata, and shared component translations (`paths::sharedAssetPath()`), while each application supplies and resolves its own application-specific assets and translations (`paths::assetPath()`). Validate shared library translation keys with `python3 tools/i18n-check.py`.

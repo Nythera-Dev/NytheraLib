@@ -44,6 +44,7 @@ struct SearchPickerPopupRequest {
   float preferredHeight = 0.0F;
   // Use a focused, resizable native toplevel instead of an xdg_popup.
   bool nativeWindow = false;
+  std::string nativeAppId;
   xdg_toplevel* nativeParent = nullptr;
   wl_surface* nativeParentSurface = nullptr;
 };

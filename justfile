@@ -25,7 +25,7 @@ _validate-mode m:
 configure m=mode install_prefix=prefix: (_validate-mode m)
     #!/usr/bin/env bash
     set -euo pipefail
-    args=(--buildtype={{ if m == "release" { "release" } else if m == "asan" { "debug" } else { debug-buildtype } }} -Dcpp_std={{cpp-std}} --libdir={{libdir}})
+    args=(--buildtype={{ if m == "release" { "release" } else if m == "asan" { "debug" } else { debug-buildtype } }} -Dcpp_std={{cpp-std}} -Dtests=auto --libdir={{libdir}})
     [[ "{{m}}" == "release" ]] && args+=(-Db_lto=true)
     [[ "{{m}}" == "asan"    ]] && args+=(-Db_sanitize=address,undefined)
     if [[ -d "build-{{m}}" ]]; then
@@ -36,7 +36,7 @@ configure m=mode install_prefix=prefix: (_validate-mode m)
     ln -sfn "build-{{m}}/compile_commands.json" compile_commands.json
 
 build m=mode: (_ensure-configured m)
-    meson compile -C build-{{m}}
+    meson compile -C build-{{m}} nythera_lib
 
 _ensure-configured m=mode: (_validate-mode m)
     #!/usr/bin/env bash
@@ -47,14 +47,25 @@ _ensure-configured m=mode: (_validate-mode m)
     fi
     configure_output="$(meson configure "build-{{m}}")"
     current_cpp_std="$(awk '$1 == "cpp_std" { print $2; found=1 } END { if (!found) exit 1 }' <<<"$configure_output")"
+    current_tests="$(awk '$1 == "tests" { print $2; found=1 } END { if (!found) exit 1 }' <<<"$configure_output")"
     current_buildtype="$(awk '$1 == "buildtype" { print $2; found=1 } END { if (!found) exit 1 }' <<<"$configure_output")"
     desired_buildtype="{{ if m == "release" { "release" } else if m == "asan" { "debug" } else { debug-buildtype } }}"
     args=()
     [[ "$current_buildtype" != "$desired_buildtype" ]] && args+=(-Dbuildtype="$desired_buildtype")
     [[ "$current_cpp_std" != "{{cpp-std}}" ]] && args+=(-Dcpp_std={{cpp-std}})
+    [[ "$current_tests" != "auto" ]] && args+=(-Dtests=auto)
     if (( ${#args[@]} > 0 )); then
         meson configure "build-{{m}}" "${args[@]}"
     fi
+
+# Build and run the unit tests, enabling their targets when auto mode omits them.
+test m=mode *args: (_ensure-configured m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{m}}" == "release" || "{{m}}" == "asan" ]]; then
+        meson setup "build-{{m}}" -Dtests=enabled --reconfigure >/dev/null
+    fi
+    meson test -C build-{{m}} --print-errorlogs {{args}}
 
 install m: (_validate-mode m)
     #!/usr/bin/env bash
@@ -89,18 +100,19 @@ format: format-code
 format-check: format-code-check
 
 format-code: _check_formatter
-    find src \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format -i
-    find src \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 grep -ZlP '\s+$' | xargs -0 -r sed -i 's/[[:space:]]*$//'
+    find src tests \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format -i
+    find src tests \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 grep -ZlP '\s+$' | xargs -0 -r sed -i 's/[[:space:]]*$//'
 
 format-code-check: _check_formatter
-    find src \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run -Werror
+    find src tests \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run -Werror
 
 _clang_tidy m=mode *args: (_validate-mode m)
     #!/usr/bin/env bash
     set -euo pipefail
     meson compile -C "build-{{m}}" generated-headers
     src_root="$(realpath src)"
-    run-clang-tidy -quiet -use-color -p "build-{{m}}" -j "$(nproc)" -header-filter='\.\./src/.*' {{args}} "^${src_root}/.*"
+    tests_root="$(realpath tests)"
+    run-clang-tidy -quiet -use-color -p "build-{{m}}" -j "$(nproc)" -header-filter='\.\./(src|tests)/.*' {{args}} "^(${src_root}|${tests_root})/.*"
 
 lint m=mode: (_ensure-configured m)
     just _clang_tidy {{m}} '-warnings-as-errors=*'

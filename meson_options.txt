@@ -10,3 +10,9 @@ option(
   value: false,
   description: 'Link system Wuffs, fzy, and Material Color Utilities instead of the vendored copies in third_party/',
 )
+option(
+  'tests',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build unit tests',
+)

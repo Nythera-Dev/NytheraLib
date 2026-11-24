@@ -1,0 +1,199 @@
+{
+  "clipboard": {
+    "title": "Klembord"
+  },
+  "common": {
+    "actions": {
+      "apply": "Toepassen",
+      "cancel": "Annuleren"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Uit"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Hele dag",
+      "events": "Evenementen",
+      "no-events": "Geen evenementen.",
+      "today": "Vandaag"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Deze sneltoets accepteert een enkele toets zonder modificatietoetsen.",
+      "keybind-invalid-printable": "Drukbare toetsen (letters, cijfers, symbolen) vereisen een modificatietoets zoals Ctrl of Alt.",
+      "keybind-invalid-super": "De Super-/Windows-toets kan niet worden gebruikt in shell-sneltoetsen.",
+      "keybind-invalid-title": "Sneltoets niet toegestaan"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Balk: {name}"
+      }
+    },
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compact",
+          "full": "Volledig",
+          "none": "Geen"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Einde",
+        "none": "Geen",
+        "start": "Begin"
+      },
+      "edge": {
+        "bottom": "Onder",
+        "left": "Links",
+        "right": "Rechts",
+        "top": "Boven"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Vastgemaakt",
+          "floating": "Zwevend"
+        },
+        "panel-transparency": {
+          "glass": "Glas",
+          "soft": "Zacht",
+          "solid": "Effen"
+        },
+        "password-style": {
+          "filled-circles": "Ingevulde cirkels",
+          "random-icons": "Willekeurige iconen"
+        },
+        "shadow-direction": {
+          "center": "Midden",
+          "down": "Omlaag",
+          "down-left": "Links omlaag",
+          "down-right": "Rechts omlaag",
+          "left": "Links",
+          "right": "Rechts",
+          "up": "Omhoog",
+          "up-left": "Links omhoog",
+          "up-right": "Rechts omhoog"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Donker",
+          "light": "Licht"
+        },
+        "source": {
+          "built-in": "Ingebouwd",
+          "community": "Community",
+          "custom": "Aangepast",
+          "wallpaper": "Achtergrond"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centreren",
+          "crop": "Bijsnijden",
+          "fit": "Passend maken",
+          "repeat": "Herhalen",
+          "stretch": "Uitrekken"
+        },
+        "order": {
+          "alphabetical": "Alfabetisch",
+          "random": "Willekeurig"
+        },
+        "transition": {
+          "disc": "Schijf",
+          "fade": "Vervagen",
+          "honeycomb": "Honingraat",
+          "stripes": "Strepen",
+          "wipe": "Vegen",
+          "zoom": "Zoomen"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Standaard",
+        "destructive": "Destructief",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Primair",
+        "secondary": "Secundair"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m"
+    },
+    "file": {
+      "unknown": "Onbekend"
+    },
+    "relative": {
+      "days-ago": "{count} dag geleden",
+      "days-ago-plural": "{count} dagen geleden",
+      "hours-ago": "{count} uur geleden",
+      "hours-ago-plural": "{count} uur geleden",
+      "just-now": "zojuist",
+      "minutes-ago": "{count} min. geleden",
+      "minutes-ago-plural": "{count} min. geleden"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Geen resultaten",
+        "placeholder": "Zoeken..."
+      },
+      "select": {
+        "placeholder": "Selecteer een optie"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Kleur"
+      },
+      "file": {
+        "actions": {
+          "open": "Openen",
+          "save": "Opslaan",
+          "select-folder": "Selecteer map"
+        },
+        "empty-filtered": "Geen bestanden komen overeen met het huidige filter",
+        "entry": {
+          "folder": "Map"
+        },
+        "filename-placeholder": "Bestandsnaam",
+        "filter-placeholder": "Filteren...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Datum",
+          "descending": "↓",
+          "name": "Naam",
+          "size": "Grootte"
+        },
+        "title": {
+          "default": "Bestandsdialoogvenster",
+          "open": "Bestand openen",
+          "save": "Bestand opslaan",
+          "select-folder": "Selecteer map"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Alle",
+        "search-placeholder": "Zoeken in glyphs…",
+        "title": "Kies een glyph"
+      }
+    }
+  }
+}

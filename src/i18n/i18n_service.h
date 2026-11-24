@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <filesystem>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -73,6 +74,10 @@ namespace i18n {
     // loads English as a fallback first; if the detected language is also
     // English, both slots end up pointing at the same catalog contents.
     void init(std::string_view preferredLang = {});
+    void init(
+        std::string_view preferredLang, const std::filesystem::path& sharedTranslationsDir,
+        const std::filesystem::path& appTranslationsDir
+    );
 
     void setLanguage(std::string_view lang);
     [[nodiscard]] std::string_view language() const noexcept { return m_language; }
@@ -84,10 +89,14 @@ namespace i18n {
     [[nodiscard]] std::string_view lookup(std::string_view dottedKey) const;
 
   private:
-    bool loadCatalog(std::string_view lang, Catalog& out) const;
+    bool loadCatalog(
+        std::string_view lang, const std::filesystem::path& sharedDir, const std::filesystem::path& appDir, Catalog& out
+    ) const;
 
     Catalog m_active;
     Catalog m_fallback;
+    std::filesystem::path m_sharedDir;
+    std::filesystem::path m_appDir;
     std::string m_language;
     std::string m_requestedLanguage;
     bool m_rtl = false;

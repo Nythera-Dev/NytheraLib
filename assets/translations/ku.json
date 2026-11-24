@@ -1,0 +1,159 @@
+{
+  "clipboard": {
+    "title": "Jêgirtdank"
+  },
+  "common": {
+    "actions": {
+      "apply": "Bisepîne",
+      "cancel": "Têk bibe"
+    },
+    "states": {
+      "auto": "Xweber",
+      "off": "Vemirî ye"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Tevahiya rojê",
+      "events": "Çalakî",
+      "no-events": "Çalakî tune ne.",
+      "today": "Îro"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "keybind-app": "Nythera"
+    }
+  },
+  "settings": {
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "full": "Tije",
+          "none": "Ne yek"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Dawî",
+        "none": "Ne yek",
+        "start": "Destpêk"
+      },
+      "edge": {
+        "bottom": "Jêr",
+        "left": "Çep",
+        "right": "Rast",
+        "top": "Jor"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Pêvekirî",
+          "floating": "Herikbar"
+        },
+        "panel-transparency": {
+          "soft": "Nerm",
+          "solid": "Sert"
+        },
+        "shadow-direction": {
+          "center": "Navend",
+          "down": "Jêr",
+          "down-left": "Çep jêr",
+          "down-right": "Rast jêr",
+          "left": "Çep",
+          "right": "Rast",
+          "up": "Jor",
+          "up-left": "Çep jor",
+          "up-right": "Rast jor"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Tarî",
+          "light": "Ronî"
+        },
+        "source": {
+          "built-in": "Xwecih",
+          "community": "Cîvat",
+          "custom": "Kesane",
+          "wallpaper": "Wêneyê dîwêr"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Navend",
+          "crop": "Jê bike",
+          "repeat": "Dûbare bike"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Berdest"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1x"
+    },
+    "file": {
+      "unknown": "Nenas"
+    },
+    "relative": {
+      "days-ago": "{count} roj berê",
+      "days-ago-plural": "{count} roj berê",
+      "hours-ago": "{count} demjimêr berê",
+      "hours-ago-plural": "{count} demjimêr berê",
+      "just-now": "Niha",
+      "minutes-ago": "{count} xulek berê",
+      "minutes-ago-plural": "{count} xulek berê"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Encam tune ne",
+        "placeholder": "Bigere..."
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Reng"
+      },
+      "file": {
+        "actions": {
+          "open": "Veke",
+          "save": "Tomar bike",
+          "select-folder": "Peldankê hilbijêre"
+        },
+        "empty-filtered": "",
+        "entry": {
+          "folder": "Peldank"
+        },
+        "filename-placeholder": "Navê pelê",
+        "filter-placeholder": "Parzûn...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Dîrok",
+          "descending": "↓",
+          "name": "Nav",
+          "size": "Mezinahî"
+        },
+        "title": {
+          "open": "Pelê veke",
+          "save": "Pelê tomar bike",
+          "select-folder": "Peldankekê hilbijêre"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Hemû"
+      }
+    }
+  }
+}

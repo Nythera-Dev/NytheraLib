@@ -1,0 +1,302 @@
+{
+  "clipboard": {
+    "title": "Área de Transferência"
+  },
+  "common": {
+    "actions": {
+      "apply": "Aplicar",
+      "cancel": "Cancelar"
+    },
+    "states": {
+      "auto": "Automático",
+      "off": "Desligada"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "O dia todo",
+      "events": "Eventos",
+      "hide-past-events": "Ocultar {count} evento passado",
+      "hide-past-events-plural": "Ocultar {count} eventos passados",
+      "no-events": "Nenhum evento.",
+      "show-past-events": "Mostrar {count} evento passado",
+      "show-past-events-plural": "Mostrar {count} eventos passados",
+      "today": "Hoje"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Atualize {path} no arquivo fonte. Nythera está aplicando está substituição só temporariamente. Execute nocatlia config validade para listar cada mudança necessária.",
+      "config-migration-title": "Atualiação de configuração necessária",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Este atalho aceita uma única tecla sem modificadores.",
+      "keybind-invalid-printable": "Teclas imprimíveis (letras, números, símbolos) requerem uma tecla modificadora como Ctrl ou Alt.",
+      "keybind-invalid-super": "A tecla Super/Windows não pode ser usada em atalhos de teclado do shell.",
+      "keybind-invalid-title": "Atalho de teclado não permitido"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Barra: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Depois do primeiro widget",
+        "start": "Antes do primeiro widget"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compacto",
+          "full": "Completo",
+          "none": "Nenhum"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Fim",
+        "none": "Nenhum",
+        "start": "Início"
+      },
+      "edge": {
+        "bottom": "Inferior",
+        "left": "Esquerda",
+        "right": "Direita",
+        "top": "Topo"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Diamante",
+          "disc": "Disco",
+          "fade": "Esvanescer",
+          "golden": "Dourado",
+          "honeycomb": "Favo de Mel",
+          "melt": "Derretido",
+          "pixel": "Pixel",
+          "stripes": "Listras",
+          "vortex": "Vórtice",
+          "wipe": "Limpar",
+          "zoom": "Zoom"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Todas",
+          "none": "Nenhum",
+          "official": "Oficial"
+        }
+      },
+      "screenshot": {
+        "format": {
+          "jpeg": "JPEG",
+          "jxl": "JPEG XL",
+          "png": "PNG",
+          "webp": "WebP"
+        },
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "Nenhuma",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "Todas",
+          "categories": "Categorias",
+          "pinned": "Fixado",
+          "recent": "Recente"
+        },
+        "launcher-layout": {
+          "full": "Completo",
+          "simple": "Simples"
+        },
+        "launcher-search-position": {
+          "bottom": "Inferior",
+          "top": "Topo"
+        },
+        "panel-placement": {
+          "attached": "Acoplado",
+          "floating": "Flutuante"
+        },
+        "panel-transparency": {
+          "glass": "Vidro",
+          "soft": "Leve",
+          "solid": "Sólido"
+        },
+        "password-style": {
+          "filled-circles": "Círculos Preenchidos",
+          "random-icons": "Ícones Aleatórios"
+        },
+        "shadow-direction": {
+          "center": "Centro",
+          "down": "Abaixo",
+          "down-left": "Abaixo à Esquerda",
+          "down-right": "Abaixo à Direita",
+          "left": "Esquerda",
+          "right": "Direita",
+          "up": "Acima",
+          "up-left": "Acima à Esquerda",
+          "up-right": "Acima à Direita"
+        },
+        "window-switcher-style": {
+          "carousel": "Carrossel ",
+          "compact": "Compacto"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Escuro",
+          "light": "Claro"
+        },
+        "shell-mode": {
+          "follow": "Seguir"
+        },
+        "source": {
+          "built-in": "Integradas",
+          "community": "Comunidade",
+          "custom": "Personalizada",
+          "wallpaper": "Papel de Parede"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centralizar",
+          "crop": "Cortar",
+          "fit": "Encaixar",
+          "repeat": "Repetir",
+          "span": "Estender",
+          "stretch": "Esticar"
+        },
+        "order": {
+          "alphabetical": "Alfabética",
+          "random": "Aleatória"
+        },
+        "transition": {
+          "diamond": "Diamante",
+          "disc": "Disco",
+          "fade": "Desvanecer",
+          "golden": "Dourado",
+          "honeycomb": "Favo de mel",
+          "melt": "Derretido",
+          "pixel": "Pixel",
+          "stripes": "Listras",
+          "vortex": "Vórtice",
+          "wipe": "Expurgar",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Padrão",
+        "destructive": "Destrutivo",
+        "ghost": "Ghost",
+        "outline": "Contorno",
+        "primary": "Primário",
+        "secondary": "Secundário"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Desconhecido"
+    },
+    "relative": {
+      "days-ago": "{count} dias atrás",
+      "days-ago-plural": "{count} dias atrás",
+      "hours-ago": "{count} hr atrás",
+      "hours-ago-plural": "{count} hrs atrás",
+      "just-now": "Ainda há pouco",
+      "minutes-ago": "{count} min atrás",
+      "minutes-ago-plural": "{count} mins atrás"
+    },
+    "units": {
+      "day": "{count} dia",
+      "day-plural": "{count} dias",
+      "hour": "{count} hora",
+      "hour-plural": "{count} horas",
+      "minute": "{count} minuto",
+      "minute-plural": "{count} minutos"
+    }
+  },
+  "ui": {
+    "controls": {
+      "key-names": {
+        "backspace": "Backspace",
+        "delete": "Delete",
+        "down": "Baixo",
+        "end": "End",
+        "enter": "Enter",
+        "escape": "Escape",
+        "home": "Home",
+        "insert": "Insert",
+        "left": "Esquerda",
+        "numpad-enter": "Enter do Numérico",
+        "page-down": "Page Down",
+        "page-up": "Page Up",
+        "right": "Direita",
+        "space": "Barra de Espaço",
+        "tab": "Tab",
+        "up": "Cima"
+      },
+      "search-picker": {
+        "empty": "Sem resultados",
+        "placeholder": "Buscar..."
+      },
+      "select": {
+        "placeholder": "Selecione uma opção"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "copy": "Copiar código de cor no formato atual",
+        "title": "Cor"
+      },
+      "file": {
+        "actions": {
+          "open": "Abrir",
+          "save": "Salvar",
+          "select-folder": "Selecione uma pasta"
+        },
+        "empty-filtered": "Nenhum arquivo corresponde com o filtro selecionado",
+        "entry": {
+          "folder": "Pasta"
+        },
+        "filename-placeholder": "Nome do arquivo",
+        "filter-placeholder": "Filtrar...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Data",
+          "descending": "↓",
+          "name": "Nome",
+          "size": "Tamanho"
+        },
+        "title": {
+          "default": "Diálogo de arquivo",
+          "open": "Abrir arquivo",
+          "save": "Salvar arquivo",
+          "select-folder": "Selecione pasta"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Todos",
+        "search-placeholder": "Busque símbolos...",
+        "title": "Selecione um símbolo"
+      }
+    }
+  }
+}

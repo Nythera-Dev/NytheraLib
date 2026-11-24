@@ -1,0 +1,210 @@
+{
+  "clipboard": {
+    "title": "Schránka"
+  },
+  "common": {
+    "actions": {
+      "apply": "Použít",
+      "cancel": "Zrušit"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Vypnuto"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Celý den",
+      "events": "Události",
+      "no-events": "Žádné události.",
+      "today": "Dnes"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Tato zkratka přijímá pouze jednu klávesu bez modifikátorů.",
+      "keybind-invalid-printable": "Tisknutelné klávesy (písmena, čísla, symboly) vyžadují modifikátor jako Ctrl nebo Alt.",
+      "keybind-invalid-super": "Klávesu Super/Windows nelze použít v klávesových zkratkách shellu.",
+      "keybind-invalid-title": "Klávesová zkratka není povolena"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Panel: {name}"
+      }
+    },
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Kompaktní",
+          "full": "Plný",
+          "none": "Žádný"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Konec",
+        "none": "Žádná",
+        "start": "Začátek"
+      },
+      "edge": {
+        "bottom": "Dole",
+        "left": "Vlevo",
+        "right": "Vpravo",
+        "top": "Nahoře"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Připojeno",
+          "floating": "Plovoucí"
+        },
+        "panel-transparency": {
+          "glass": "Sklo",
+          "soft": "Jemné",
+          "solid": "Plné"
+        },
+        "password-style": {
+          "filled-circles": "Vyplněné kruhy",
+          "random-icons": "Náhodné ikony"
+        },
+        "shadow-direction": {
+          "center": "Uprostřed",
+          "down": "Dolů",
+          "down-left": "Dolů vlevo",
+          "down-right": "Dolů vpravo",
+          "left": "Vlevo",
+          "right": "Vpravo",
+          "up": "Nahoru",
+          "up-left": "Nahoru vlevo",
+          "up-right": "Nahoru vpravo"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Tmavý",
+          "light": "Světlý"
+        },
+        "source": {
+          "built-in": "Vestavěná",
+          "community": "Komunitní",
+          "custom": "Vlastní",
+          "wallpaper": "Tapeta"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Na střed",
+          "crop": "Oříznout",
+          "fit": "Přizpůsobit",
+          "repeat": "Opakovat",
+          "span": "Roztáhnout přes monitory",
+          "stretch": "Roztáhnout"
+        },
+        "order": {
+          "alphabetical": "Abecedně",
+          "random": "Náhodně"
+        },
+        "transition": {
+          "disc": "Disk",
+          "fade": "Prolnutí",
+          "honeycomb": "Plástev",
+          "stripes": "Pruhy",
+          "wipe": "Setření",
+          "zoom": "Přiblížení"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Výchozí",
+        "destructive": "Destruktivní",
+        "ghost": "Neviditelné",
+        "outline": "Obrys",
+        "primary": "Primární",
+        "secondary": "Sekundární"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Neznámé"
+    },
+    "relative": {
+      "days-ago": "před {count} dnem",
+      "days-ago-plural": "před {count} dny",
+      "hours-ago": "před {count} hod",
+      "hours-ago-plural": "před {count} hod",
+      "just-now": "právě teď",
+      "minutes-ago": "před {count} min",
+      "minutes-ago-plural": "před {count} min"
+    },
+    "units": {
+      "day": "{count} den",
+      "day-plural": "{count} dní",
+      "hour": "{count} hodina",
+      "hour-plural": "{count} hodin",
+      "minute": "{count} minuta",
+      "minute-plural": "{count} minut"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Žádné výsledky",
+        "placeholder": "Hledat..."
+      },
+      "select": {
+        "placeholder": "Vyberte možnost"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Barva"
+      },
+      "file": {
+        "actions": {
+          "open": "Otevřít",
+          "save": "Uložit",
+          "select-folder": "Vybrat složku"
+        },
+        "empty-filtered": "Žádné soubory neodpovídají aktuálnímu filtru",
+        "entry": {
+          "folder": "Složka"
+        },
+        "filename-placeholder": "Název souboru",
+        "filter-placeholder": "Filtrovat...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Datum",
+          "descending": "↓",
+          "name": "Název",
+          "size": "Velikost"
+        },
+        "title": {
+          "default": "Dialog souboru",
+          "open": "Otevřít soubor",
+          "save": "Uložit soubor",
+          "select-folder": "Vybrat složku"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Vše",
+        "search-placeholder": "Hledat ikony…",
+        "title": "Vybrat ikonu"
+      }
+    }
+  }
+}

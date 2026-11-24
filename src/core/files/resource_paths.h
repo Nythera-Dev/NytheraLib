@@ -1,9 +1,24 @@
 #pragma once
 
 #include <filesystem>
+#include <string>
 #include <string_view>
 
 namespace paths {
+
+  struct AssetResolutionContext {
+    std::string envOverride;
+    std::filesystem::path executablePath;
+    std::filesystem::path installPrefix;
+    std::filesystem::path installDatadir;
+  };
+
+  struct SharedAssetResolutionContext {
+    std::string envOverride;
+    std::filesystem::path libraryPath;
+    std::filesystem::path installPrefix;
+    std::filesystem::path installDatadir;
+  };
 
   // Set the application installation paths before resolving assets.
   void setInstallPaths(std::string_view prefix, std::string_view datadir);
@@ -14,5 +29,12 @@ namespace paths {
 
   [[nodiscard]] const std::filesystem::path& assetsRoot();
   [[nodiscard]] std::filesystem::path assetPath(std::string_view relativePath);
+
+  [[nodiscard]] const std::filesystem::path& sharedAssetsRoot();
+  [[nodiscard]] std::filesystem::path sharedAssetPath(std::string_view relativePath);
+
+  [[nodiscard]] std::filesystem::path resolveShellAssetsRoot(const AssetResolutionContext& context);
+  [[nodiscard]] std::filesystem::path resolveFilesAssetsRoot(const AssetResolutionContext& context);
+  [[nodiscard]] std::filesystem::path resolveSharedAssetsRoot(const SharedAssetResolutionContext& context);
 
 } // namespace paths

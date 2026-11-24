@@ -1,0 +1,212 @@
+{
+  "clipboard": {
+    "title": "Portapapeis"
+  },
+  "common": {
+    "actions": {
+      "apply": "Aplicar",
+      "cancel": "Cancelar"
+    },
+    "states": {
+      "auto": "Automático",
+      "off": "Desactivado"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Todo o día",
+      "events": "Eventos",
+      "no-events": "Non hai eventos.",
+      "today": "Hoxe"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "A configuración antiga estase migrando na memoria, incluído {path}. Actualiza a configuración de orixe; Configuración e nythera config validate mostran a substitución requirida.",
+      "config-migration-title": "Cómpre actualizar a configuración",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Este atallo acepta unha soa tecla sen modificadores.",
+      "keybind-invalid-printable": "As teclas imprimibles (letras, números e símbolos) requiren un modificador como Ctrl ou Alt.",
+      "keybind-invalid-super": "A tecla Super/Windows non se pode usar nos atallos da shell.",
+      "keybind-invalid-title": "Atallo non permitido"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Barra: {name}"
+      }
+    },
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compacta",
+          "full": "Completa",
+          "none": "Ningunha"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Final",
+        "none": "Ningunha",
+        "start": "Inicio"
+      },
+      "edge": {
+        "bottom": "Abaixo",
+        "left": "Esquerda",
+        "right": "Dereita",
+        "top": "Arriba"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Anexado",
+          "floating": "Flotante"
+        },
+        "panel-transparency": {
+          "glass": "Vidro",
+          "soft": "Suave",
+          "solid": "Sólida"
+        },
+        "password-style": {
+          "filled-circles": "Círculos recheos",
+          "random-icons": "Iconas aleatorias"
+        },
+        "shadow-direction": {
+          "center": "Centro",
+          "down": "Abaixo",
+          "down-left": "Abaixo á esquerda",
+          "down-right": "Abaixo á dereita",
+          "left": "Esquerda",
+          "right": "Dereita",
+          "up": "Arriba",
+          "up-left": "Arriba á esquerda",
+          "up-right": "Arriba á dereita"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Escuro",
+          "light": "Claro"
+        },
+        "source": {
+          "built-in": "Integrada",
+          "community": "Comunidade",
+          "custom": "Personalizada",
+          "wallpaper": "Fondo de pantalla"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centrar",
+          "crop": "Recortar",
+          "fit": "Axustar",
+          "repeat": "Repetir",
+          "span": "Estender",
+          "stretch": "Estirar"
+        },
+        "order": {
+          "alphabetical": "Alfabética",
+          "random": "Aleatoria"
+        },
+        "transition": {
+          "disc": "Disco",
+          "fade": "Esvaecemento",
+          "honeycomb": "Panal",
+          "stripes": "Raias",
+          "wipe": "Varrido",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Predeterminado",
+        "destructive": "Destrutivo",
+        "ghost": "Fantasma",
+        "outline": "Contorno",
+        "primary": "Primario",
+        "secondary": "Secundario"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Descoñecido"
+    },
+    "relative": {
+      "days-ago": "hai {count} día",
+      "days-ago-plural": "hai {count} días",
+      "hours-ago": "hai {count} h",
+      "hours-ago-plural": "hai {count} h",
+      "just-now": "agora mesmo",
+      "minutes-ago": "hai {count} min",
+      "minutes-ago-plural": "hai {count} min"
+    },
+    "units": {
+      "day": "{count} día",
+      "day-plural": "{count} días",
+      "hour": "{count} hora",
+      "hour-plural": "{count} horas",
+      "minute": "{count} minuto",
+      "minute-plural": "{count} minutos"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Non hai resultados",
+        "placeholder": "Buscar..."
+      },
+      "select": {
+        "placeholder": "Selecciona unha opción"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Cor"
+      },
+      "file": {
+        "actions": {
+          "open": "Abrir",
+          "save": "Gardar",
+          "select-folder": "Seleccionar cartafol"
+        },
+        "empty-filtered": "Ningún ficheiro coincide co filtro actual",
+        "entry": {
+          "folder": "Cartafol"
+        },
+        "filename-placeholder": "Nome do ficheiro",
+        "filter-placeholder": "Filtrar...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Data",
+          "descending": "↓",
+          "name": "Nome",
+          "size": "Tamaño"
+        },
+        "title": {
+          "default": "Diálogo de ficheiros",
+          "open": "Abrir ficheiro",
+          "save": "Gardar ficheiro",
+          "select-folder": "Seleccionar cartafol"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Todos",
+        "search-placeholder": "Buscar glifos…",
+        "title": "Escoller un glifo"
+      }
+    }
+  }
+}

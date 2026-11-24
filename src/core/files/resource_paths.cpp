@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <dlfcn.h>
 #include <optional>
 #include <string>
 #include <system_error>
@@ -28,12 +29,29 @@ namespace paths {
       return paths;
     }
 
-    std::filesystem::path installedAssetsRoot() {
-      const auto& datadir = installPaths().datadir;
+    std::filesystem::path joinInstalledSubdir(
+        const std::filesystem::path& prefix, const std::filesystem::path& datadir, std::string_view appDir,
+        std::string_view bundleDir
+    ) {
       if (datadir.is_absolute()) {
-        return datadir / "nythera" / "assets";
+        return datadir / appDir / bundleDir;
       }
-      return installPaths().prefix / datadir / "nythera" / "assets";
+      return prefix / datadir / appDir / bundleDir;
+    }
+
+    std::filesystem::path
+    installedAssetsRoot(const std::filesystem::path& prefix, const std::filesystem::path& datadir) {
+      return joinInstalledSubdir(prefix, datadir, "nythera", "assets");
+    }
+
+    std::filesystem::path
+    installedFilesAssetsRoot(const std::filesystem::path& prefix, const std::filesystem::path& datadir) {
+      return joinInstalledSubdir(prefix, datadir, "nythera", "files-assets");
+    }
+
+    std::filesystem::path
+    installedSharedAssetsRoot(const std::filesystem::path& prefix, const std::filesystem::path& datadir) {
+      return joinInstalledSubdir(prefix, datadir, "nythera-lib", "assets");
     }
 
     bool isAssetRoot(const std::filesystem::path& root) {
@@ -43,9 +61,30 @@ namespace paths {
 
       std::error_code ec;
       return std::filesystem::exists(root / "emoji.json", ec)
-          && std::filesystem::exists(root / "fonts" / "nythera-tabler.ttf", ec)
           && std::filesystem::exists(root / "templates" / "builtin.toml", ec)
           && std::filesystem::exists(root / "translations" / "en.json", ec);
+    }
+
+    bool isFilesAssetRoot(const std::filesystem::path& root) {
+      if (root.empty()) {
+        return false;
+      }
+
+      std::error_code ec;
+      return std::filesystem::is_regular_file(root / "dialogue-window-artwork" / "top-left-diagonals.svg", ec)
+          && std::filesystem::is_regular_file(root / "templates" / "filemanager" / "office" / "blank.odt", ec);
+    }
+
+    bool isSharedAssetRoot(const std::filesystem::path& root) {
+      if (root.empty()) {
+        return false;
+      }
+
+      std::error_code ec;
+      return std::filesystem::is_regular_file(root / "fonts" / "NytheraDisplay-Regular.ttf", ec)
+          && std::filesystem::is_regular_file(root / "fonts" / "nythera-tabler.ttf", ec)
+          && std::filesystem::is_regular_file(root / "fonts" / "tabler.json", ec)
+          && std::filesystem::is_regular_file(root / "translations" / "en.json", ec);
     }
 
     std::optional<std::filesystem::path> executablePath() {
@@ -59,51 +98,23 @@ namespace paths {
       return std::filesystem::path(buffer.data());
     }
 
-    bool isFilesAssetRoot(const std::filesystem::path& root) {
+    std::optional<std::filesystem::path> libraryPath() {
+      Dl_info info{};
+      if (::dladdr(reinterpret_cast<const void*>(&sharedAssetsRoot), &info) == 0
+          || info.dli_fname == nullptr
+          || info.dli_fname[0] == '\0') {
+        return std::nullopt;
+      }
       std::error_code ec;
-      // The Tabler font and catalogue are optional. Keep a single root even if either is absent.
-      return std::filesystem::is_regular_file(root / "fonts" / "NytheraDisplay-Regular.ttf", ec)
-          && std::filesystem::is_regular_file(root / "translations" / "en.json", ec);
+      const std::filesystem::path candidate(info.dli_fname);
+      const auto resolved = std::filesystem::weakly_canonical(candidate, ec);
+      return (!ec && !resolved.empty()) ? std::optional<std::filesystem::path>(resolved)
+                                        : std::optional<std::filesystem::path>(candidate);
     }
 
-    std::filesystem::path installedFilesAssetsRoot() {
-      const auto& datadir = installPaths().datadir;
-      if (datadir.is_absolute()) {
-        return datadir / "nythera" / "files-assets";
-      }
-      return installPaths().prefix / datadir / "nythera" / "files-assets";
-    }
-
-    std::filesystem::path resolveFilesAssetsRoot() {
-      if (const char* env = std::getenv("NYTHERA_ASSETS_DIR"); env != nullptr && env[0] != '\0') {
-        const std::filesystem::path overridePath(env);
-        if (isFilesAssetRoot(overridePath)) {
-          kLog.debug("using Files assets from {}", overridePath.string());
-          return overridePath;
-        }
-        kLog.warn("NYTHERA_ASSETS_DIR is not a valid Files asset bundle: {}", overridePath.string());
-      }
-
-      const auto executable = executablePath();
-      if (!executable) {
-        kLog.error("could not locate the Files executable to resolve its asset bundle");
-        return {};
-      }
-      const auto exeDir = executable->parent_path();
-      const auto bundle = exeDir / "files-assets";
-      for (const auto& candidate : {bundle, exeDir / "assets", exeDir.parent_path() / "assets"}) {
-        if (isFilesAssetRoot(candidate)) {
-          kLog.debug("using Files assets from {}", candidate.string());
-          return candidate;
-        }
-      }
-      const auto installed = installedFilesAssetsRoot();
-      if (isFilesAssetRoot(installed)) {
-        kLog.debug("using installed Files assets from {}", installed.string());
-        return installed;
-      }
-      kLog.warn("could not locate a valid Files asset bundle; defaulting to {}", installed.string());
-      return installed;
+    std::string envString(const char* name) {
+      const char* value = std::getenv(name);
+      return (value != nullptr && value[0] != '\0') ? std::string(value) : std::string{};
     }
 
     void appendUnique(std::vector<std::filesystem::path>& candidates, const std::filesystem::path& candidate) {
@@ -115,48 +126,150 @@ namespace paths {
       }
     }
 
-    std::vector<std::filesystem::path> assetCandidates() {
+    std::vector<std::filesystem::path> shellAssetCandidates(const AssetResolutionContext& context) {
       std::vector<std::filesystem::path> candidates;
 
-      if (const char* env = std::getenv("NYTHERA_ASSETS_DIR"); env != nullptr && env[0] != '\0') {
-        const std::filesystem::path overridePath(env);
-        if (isAssetRoot(overridePath)) {
-          candidates.push_back(overridePath);
-          return candidates;
-        }
-        kLog.warn("NYTHERA_ASSETS_DIR is not a valid asset bundle: {}", overridePath.string());
-      }
-
-      if (auto exe = executablePath()) {
-        const std::filesystem::path exeDir = exe->parent_path();
+      if (!context.executablePath.empty()) {
+        const std::filesystem::path exeDir = context.executablePath.parent_path();
         appendUnique(candidates, exeDir / "assets");
         appendUnique(candidates, exeDir.parent_path() / "assets");
 
-        const auto& datadir = installPaths().datadir;
-        if (!datadir.empty() && !datadir.is_absolute()) {
-          appendUnique(candidates, exeDir.parent_path() / datadir / "nythera" / "assets");
+        if (!context.installDatadir.empty() && !context.installDatadir.is_absolute()) {
+          appendUnique(candidates, exeDir.parent_path() / context.installDatadir / "nythera" / "assets");
         }
         appendUnique(candidates, exeDir.parent_path() / "share" / "nythera" / "assets");
       }
 
-      appendUnique(candidates, installedAssetsRoot());
+      appendUnique(candidates, installedAssetsRoot(context.installPrefix, context.installDatadir));
       return candidates;
     }
 
-    std::filesystem::path resolveAssetsRoot() {
-      for (const auto& candidate : assetCandidates()) {
-        if (isAssetRoot(candidate)) {
-          kLog.debug("using assets from {}", candidate.string());
-          return candidate;
+    std::vector<std::filesystem::path> filesAssetCandidates(const AssetResolutionContext& context) {
+      std::vector<std::filesystem::path> candidates;
+
+      if (!context.executablePath.empty()) {
+        const std::filesystem::path exeDir = context.executablePath.parent_path();
+        appendUnique(candidates, exeDir / "files-assets");
+
+        if (!context.installDatadir.empty() && !context.installDatadir.is_absolute()) {
+          appendUnique(candidates, exeDir.parent_path() / context.installDatadir / "nythera" / "files-assets");
         }
+        appendUnique(candidates, exeDir.parent_path() / "share" / "nythera" / "files-assets");
       }
 
-      const std::filesystem::path fallback = installedAssetsRoot();
-      kLog.warn("could not locate a valid asset bundle; defaulting to {}", fallback.string());
-      return fallback;
+      appendUnique(candidates, installedFilesAssetsRoot(context.installPrefix, context.installDatadir));
+      return candidates;
+    }
+
+    std::vector<std::filesystem::path> sharedAssetCandidates(const SharedAssetResolutionContext& context) {
+      std::vector<std::filesystem::path> candidates;
+
+      if (!context.libraryPath.empty()) {
+        const std::filesystem::path libDir = context.libraryPath.parent_path();
+        const std::filesystem::path parentDir = libDir.parent_path();
+        const std::filesystem::path grandParentDir = parentDir.parent_path();
+
+        if (!context.installDatadir.empty() && !context.installDatadir.is_absolute()) {
+          appendUnique(candidates, parentDir / context.installDatadir / "nythera-lib" / "assets");
+          appendUnique(candidates, grandParentDir / context.installDatadir / "nythera-lib" / "assets");
+        }
+        appendUnique(candidates, parentDir / "share" / "nythera-lib" / "assets");
+        appendUnique(candidates, grandParentDir / "share" / "nythera-lib" / "assets");
+        appendUnique(candidates, libDir / "assets");
+        appendUnique(candidates, parentDir / "assets");
+      }
+
+      appendUnique(candidates, installedSharedAssetsRoot(context.installPrefix, context.installDatadir));
+      return candidates;
+    }
+
+    std::filesystem::path resolveRuntimeAssetsRoot() {
+      const AssetResolutionContext context{
+          .envOverride = envString("NYTHERA_ASSETS_DIR"),
+          .executablePath = executablePath().value_or(std::filesystem::path{}),
+          .installPrefix = installPaths().prefix,
+          .installDatadir = installPaths().datadir,
+      };
+      return s_usingFilesAssets ? resolveFilesAssetsRoot(context) : resolveShellAssetsRoot(context);
+    }
+
+    std::filesystem::path resolveRuntimeSharedAssetsRoot() {
+      const SharedAssetResolutionContext context{
+          .envOverride = envString("NYTHERA_LIB_ASSETS_DIR"),
+          .libraryPath = libraryPath().value_or(std::filesystem::path{}),
+          .installPrefix = std::filesystem::path(NYTHERA_LIB_INSTALL_PREFIX),
+          .installDatadir = std::filesystem::path(NYTHERA_LIB_INSTALL_DATADIR),
+      };
+      return resolveSharedAssetsRoot(context);
     }
 
   } // namespace
+
+  std::filesystem::path resolveShellAssetsRoot(const AssetResolutionContext& context) {
+    if (!context.envOverride.empty()) {
+      const std::filesystem::path overridePath(context.envOverride);
+      if (isAssetRoot(overridePath)) {
+        kLog.debug("using assets from {}", overridePath.string());
+        return overridePath;
+      }
+      kLog.warn("NYTHERA_ASSETS_DIR is not a valid asset bundle: {}", overridePath.string());
+    }
+
+    for (const auto& candidate : shellAssetCandidates(context)) {
+      if (isAssetRoot(candidate)) {
+        kLog.debug("using assets from {}", candidate.string());
+        return candidate;
+      }
+    }
+
+    const std::filesystem::path fallback = installedAssetsRoot(context.installPrefix, context.installDatadir);
+    kLog.warn("could not locate a valid asset bundle; defaulting to {}", fallback.string());
+    return fallback;
+  }
+
+  std::filesystem::path resolveFilesAssetsRoot(const AssetResolutionContext& context) {
+    if (!context.envOverride.empty()) {
+      const std::filesystem::path overridePath(context.envOverride);
+      if (isFilesAssetRoot(overridePath)) {
+        kLog.debug("using Files assets from {}", overridePath.string());
+        return overridePath;
+      }
+      kLog.warn("NYTHERA_ASSETS_DIR is not a valid Files asset bundle: {}", overridePath.string());
+    }
+
+    for (const auto& candidate : filesAssetCandidates(context)) {
+      if (isFilesAssetRoot(candidate)) {
+        kLog.debug("using Files assets from {}", candidate.string());
+        return candidate;
+      }
+    }
+
+    const std::filesystem::path fallback = installedFilesAssetsRoot(context.installPrefix, context.installDatadir);
+    kLog.warn("could not locate a valid Files asset bundle; defaulting to {}", fallback.string());
+    return fallback;
+  }
+
+  std::filesystem::path resolveSharedAssetsRoot(const SharedAssetResolutionContext& context) {
+    if (!context.envOverride.empty()) {
+      const std::filesystem::path overridePath(context.envOverride);
+      if (isSharedAssetRoot(overridePath)) {
+        kLog.debug("using NytheraLib assets from {}", overridePath.string());
+        return overridePath;
+      }
+      kLog.warn("NYTHERA_LIB_ASSETS_DIR is not a valid NytheraLib asset bundle: {}", overridePath.string());
+    }
+
+    for (const auto& candidate : sharedAssetCandidates(context)) {
+      if (isSharedAssetRoot(candidate)) {
+        kLog.debug("using NytheraLib assets from {}", candidate.string());
+        return candidate;
+      }
+    }
+
+    const std::filesystem::path fallback = installedSharedAssetsRoot(context.installPrefix, context.installDatadir);
+    kLog.warn("could not locate a valid NytheraLib asset bundle; defaulting to {}", fallback.string());
+    return fallback;
+  }
 
   void setInstallPaths(std::string_view prefix, std::string_view datadir) {
     installPaths() = {std::filesystem::path(prefix), std::filesystem::path(datadir)};
@@ -167,12 +280,21 @@ namespace paths {
   bool usingFilesAssets() noexcept { return s_usingFilesAssets; }
 
   const std::filesystem::path& assetsRoot() {
-    static const std::filesystem::path s_root = s_usingFilesAssets ? resolveFilesAssetsRoot() : resolveAssetsRoot();
+    static const std::filesystem::path s_root = resolveRuntimeAssetsRoot();
     return s_root;
   }
 
   std::filesystem::path assetPath(std::string_view relativePath) {
     return assetsRoot() / std::filesystem::path(std::string(relativePath));
+  }
+
+  const std::filesystem::path& sharedAssetsRoot() {
+    static const std::filesystem::path s_root = resolveRuntimeSharedAssetsRoot();
+    return s_root;
+  }
+
+  std::filesystem::path sharedAssetPath(std::string_view relativePath) {
+    return sharedAssetsRoot() / std::filesystem::path(std::string(relativePath));
   }
 
 } // namespace paths

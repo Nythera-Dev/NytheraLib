@@ -1,0 +1,223 @@
+{
+  "clipboard": {
+    "title": "Zwischenablage"
+  },
+  "common": {
+    "actions": {
+      "apply": "Anwenden",
+      "cancel": "Abbrechen"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Aus"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Ganztägig",
+      "events": "Ereignisse",
+      "no-events": "Keine Ereignisse.",
+      "today": "Heute"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Aktualisiere {path} in der Quelldatei. Nythera wendet diesen Ersatz nur vorübergehend an. Führe nythera config validate aus, um alle erforderlichen Änderungen aufzulisten.",
+      "config-migration-title": "Konfigurationsupdate erforderlich",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Dieses Tastenkürzel akzeptiert eine einzelne Taste ohne Zusatztasten.",
+      "keybind-invalid-printable": "Druckbare Tasten (Buchstaben, Zahlen, Symbole) benötigen einen Modifikator wie Ctrl oder Alt.",
+      "keybind-invalid-super": "Die Super-/Windows-Taste kann nicht für Shell-Tastenkombinationen verwendet werden.",
+      "keybind-invalid-title": "Tastenkombination nicht erlaubt"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Leiste: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Nach dem ersten Widget",
+        "start": "Vor dem ersten Widget"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Strg+Umschalt+V",
+          "ctrl-v": "Strg+V",
+          "shift-insert": "Umschalt+Einfg"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Kompakt",
+          "full": "Vollständig",
+          "none": "Keine"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Ende",
+        "none": "Keine",
+        "start": "Anfang"
+      },
+      "edge": {
+        "bottom": "Unten",
+        "left": "Links",
+        "right": "Rechts",
+        "top": "Oben"
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Alle",
+          "none": "Keine",
+          "official": "Offizielle"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Angedockt",
+          "floating": "Schwebend"
+        },
+        "panel-transparency": {
+          "glass": "Glas",
+          "soft": "Matt",
+          "solid": "Opak"
+        },
+        "password-style": {
+          "filled-circles": "Gefüllte Kreise",
+          "random-icons": "Zufällige Symbole"
+        },
+        "shadow-direction": {
+          "center": "Mitte",
+          "down": "Unten",
+          "down-left": "Unten links",
+          "down-right": "Unten rechts",
+          "left": "Links",
+          "right": "Rechts",
+          "up": "Oben",
+          "up-left": "Oben links",
+          "up-right": "Oben rechts"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Dunkel",
+          "light": "Hell"
+        },
+        "source": {
+          "built-in": "Integriert",
+          "community": "Community",
+          "custom": "Benutzerdefiniert",
+          "wallpaper": "Hintergrundbild"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Zentrieren",
+          "crop": "Zuschneiden",
+          "fit": "Anpassen",
+          "repeat": "Wiederholen",
+          "span": "Erstrecken",
+          "stretch": "Strecken"
+        },
+        "order": {
+          "alphabetical": "Alphabetisch",
+          "random": "Zufällig"
+        },
+        "transition": {
+          "disc": "Disc",
+          "fade": "Fade",
+          "honeycomb": "Honeycomb",
+          "stripes": "Stripes",
+          "wipe": "Wipe",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Standard",
+        "destructive": "Destruktiv",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Primär",
+        "secondary": "Sekundär"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Unbekannt"
+    },
+    "relative": {
+      "days-ago": "vor {count} Tag",
+      "days-ago-plural": "vor {count} Tagen",
+      "hours-ago": "vor {count} Std.",
+      "hours-ago-plural": "vor {count} Std.",
+      "just-now": "gerade eben",
+      "minutes-ago": "vor {count} Min.",
+      "minutes-ago-plural": "vor {count} Min."
+    },
+    "units": {
+      "day": "{count} Tag",
+      "day-plural": "{count} Tage",
+      "hour": "{count} Stunde",
+      "hour-plural": "{count} Stunden",
+      "minute": "{count} Minute",
+      "minute-plural": "{count} Minuten"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Keine Ergebnisse",
+        "placeholder": "Suchen…"
+      },
+      "select": {
+        "placeholder": "Option auswählen"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Farbe"
+      },
+      "file": {
+        "actions": {
+          "open": "Öffnen",
+          "save": "Speichern",
+          "select-folder": "Ordner auswählen"
+        },
+        "empty-filtered": "Keine Dateien entsprechen dem aktuellen Filter",
+        "entry": {
+          "folder": "Ordner"
+        },
+        "filename-placeholder": "Dateiname",
+        "filter-placeholder": "Filtern…",
+        "sort": {
+          "ascending": "↑",
+          "date": "Datum",
+          "descending": "↓",
+          "name": "Name",
+          "size": "Größe"
+        },
+        "title": {
+          "default": "Dateidialog",
+          "open": "Datei öffnen",
+          "save": "Datei speichern",
+          "select-folder": "Ordner auswählen"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Alle",
+        "search-placeholder": "Symbole suchen…",
+        "title": "Symbol auswählen"
+      }
+    }
+  }
+}

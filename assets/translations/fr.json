@@ -1,0 +1,223 @@
+{
+  "clipboard": {
+    "title": "Presse-papiers"
+  },
+  "common": {
+    "actions": {
+      "apply": "Appliquer",
+      "cancel": "Annuler"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Désactivé"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Toute la journée",
+      "events": "Événements",
+      "no-events": "Pas d'événement.",
+      "today": "Aujourd'hui"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-title": "Mise à jour de la configuration nécessaire",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Ce raccourci accepte une seule touche sans modificateur.",
+      "keybind-invalid-printable": "Les touches imprimables (lettres, chiffres, symboles) nécessitent un modificateur tel que Ctrl ou Alt.",
+      "keybind-invalid-super": "La touche Super/Windows ne peut pas être utilisée dans les raccourcis du shell.",
+      "keybind-invalid-title": "Raccourci non autorisé"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Barre : {name}"
+      }
+    },
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Inser"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compact",
+          "full": "Complet",
+          "none": "Aucun"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Fin",
+        "none": "Aucun",
+        "start": "Début"
+      },
+      "edge": {
+        "bottom": "Bas",
+        "left": "Gauche",
+        "right": "Droite",
+        "top": "Haut"
+      },
+      "screenshot": {
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "Aucun",
+          "shift": "Maj",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Attaché",
+          "floating": "Flottant"
+        },
+        "panel-transparency": {
+          "glass": "Verre",
+          "soft": "Doux",
+          "solid": "Opaque"
+        },
+        "password-style": {
+          "filled-circles": "Cercles pleins",
+          "random-icons": "Icônes aléatoires"
+        },
+        "shadow-direction": {
+          "center": "Centre",
+          "down": "Bas",
+          "down-left": "Bas gauche",
+          "down-right": "Bas droit",
+          "left": "Gauche",
+          "right": "Droite",
+          "up": "Haut",
+          "up-left": "Haut gauche",
+          "up-right": "Haut droit"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Sombre",
+          "light": "Clair"
+        },
+        "shell-mode": {
+          "follow": "Suivre"
+        },
+        "source": {
+          "built-in": "Intégré",
+          "community": "Communauté",
+          "custom": "Personnalisé",
+          "wallpaper": "Fond d'écran"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centrer",
+          "crop": "Rogner",
+          "fit": "Ajuster",
+          "repeat": "Répéter",
+          "span": "Étendre",
+          "stretch": "Étendre"
+        },
+        "order": {
+          "alphabetical": "Alphabétique",
+          "random": "Au hasard"
+        },
+        "transition": {
+          "disc": "Disque",
+          "fade": "Fondu",
+          "honeycomb": "Nid d’abeilles",
+          "stripes": "Bandes",
+          "wipe": "Balayage",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Par défaut",
+        "destructive": "Destructif",
+        "ghost": "Transparent",
+        "outline": "Contour",
+        "primary": "Principal",
+        "secondary": "Secondaire"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Inconnu"
+    },
+    "relative": {
+      "days-ago": "il y a {count} jour",
+      "days-ago-plural": "il y a {count} jours",
+      "hours-ago": "il y a {count} heure",
+      "hours-ago-plural": "il y a {count} heures",
+      "just-now": "À l'instant",
+      "minutes-ago": "il y a {count} minute",
+      "minutes-ago-plural": "il y a {count} minutes"
+    },
+    "units": {
+      "day": "{count} jour",
+      "day-plural": "{count} jours",
+      "hour": "{count} heure ",
+      "hour-plural": "{count} heures",
+      "minute": "{count} minute",
+      "minute-plural": "{count} minutes"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Pas de résultat",
+        "placeholder": "Chercher..."
+      },
+      "select": {
+        "placeholder": "Choisir une option"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Couleur"
+      },
+      "file": {
+        "actions": {
+          "open": "Ouvrir",
+          "save": "Sauvegarder",
+          "select-folder": "Choisir un dossier"
+        },
+        "empty-filtered": "Aucun fichier ne correspond au filtre actuel",
+        "entry": {
+          "folder": "Dossier"
+        },
+        "filename-placeholder": "Nom du fichier",
+        "filter-placeholder": "Filtre...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Date",
+          "descending": "↓",
+          "name": "Nom",
+          "size": "Taille"
+        },
+        "title": {
+          "default": "Boîte de dialogue",
+          "open": "Ouvrir le fichier",
+          "save": "Sauvegarder le fichier",
+          "select-folder": "Choisir un dossier"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Tous",
+        "search-placeholder": "Chercher des glyphes",
+        "title": "Choisir un glyphe"
+      }
+    }
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "clipboard": {
+    "title": "Utklippstavla"
+  },
+  "common": {
+    "actions": {
+      "apply": "Bruk",
+      "cancel": "Avbryt"
+    },
+    "states": {
+      "auto": "Automatisk",
+      "off": "Avslegen"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Hiele døgeret",
+      "events": "Arrangement",
+      "no-events": "Ingen arrangement",
+      "today": "I dag"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Oppdater {path} i brunnfila. Nythera legg til dette utbytet berre mellombels. Køyr nythera config validate for å sjå alle dei naudsynlege brigda.",
+      "config-migration-title": "Tilmåtinga krev oppdatering",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Snarvegen godtek éin knapp utan hjelpeknappar.",
+      "keybind-invalid-printable": "Skrivande knappar (bokstavar, tal, teikn) krev ein hjelpeknapp som Ctrl eller Alt.",
+      "keybind-invalid-super": "Du kan ikkje bruka Superknappen/Windowsknappen i skalsnarvegar.",
+      "keybind-invalid-title": "Snarveg ikkje tillaten."
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Stong: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Etter fyrste nøytel",
+        "start": "Før fyrste nøytel"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Tett",
+          "full": "Full",
+          "none": "Ingen"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Ende",
+        "none": "Ingen",
+        "start": "Byrjing"
+      },
+      "edge": {
+        "bottom": "Botn",
+        "left": "Venstre",
+        "right": "Høgre",
+        "top": "Topp"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Bunden",
+          "floating": "Svivande"
+        },
+        "panel-transparency": {
+          "glass": "Glas",
+          "soft": "Mjuk",
+          "solid": "Hard"
+        },
+        "password-style": {
+          "filled-circles": "Fylte ringar",
+          "random-icons": "Vilkårlege merke"
+        },
+        "shadow-direction": {
+          "center": "I midten",
+          "down": "Ned",
+          "down-left": "Ned venstre",
+          "down-right": "Ned høgre",
+          "left": "Venstre",
+          "right": "Høgre",
+          "up": "Opp",
+          "up-left": "Opp venstre",
+          "up-right": "Opp høgre"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Mørk",
+          "light": "Ljos"
+        },
+        "source": {
+          "built-in": "Innebygd",
+          "community": "Samfunn",
+          "custom": "Sjølvvald",
+          "wallpaper": "Bakgrunnsbilete"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "I midten",
+          "crop": "Skjer av",
+          "fit": "Høve",
+          "repeat": "Tile",
+          "span": "Spana",
+          "stretch": "Strekk"
+        },
+        "order": {
+          "alphabetical": "Alfabetisk",
+          "random": "Vilkårleg"
+        },
+        "transition": {
+          "disc": "Skive",
+          "fade": "Folna",
+          "honeycomb": "Biekube",
+          "stripes": "Render",
+          "wipe": "Sveip",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Standard",
+        "destructive": "Skjemmande",
+        "ghost": "Skrømt",
+        "outline": "Rand",
+        "primary": "Primær",
+        "secondary": "Sekundær"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "< 1 m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Ukjend"
+    },
+    "relative": {
+      "days-ago": "for {count} dag sidan",
+      "days-ago-plural": "for {count} dagar sidan",
+      "hours-ago": "for {count} t sidan",
+      "hours-ago-plural": "for {count} t sidan",
+      "just-now": "nett no",
+      "minutes-ago": "for {count} min sidan",
+      "minutes-ago-plural": "for {count} min sidan"
+    },
+    "units": {
+      "day": "{count} dag",
+      "day-plural": "{count} dagar",
+      "hour": "{count} time",
+      "hour-plural": "{count} timar",
+      "minute": "{count} minutt",
+      "minute-plural": "{count} minutt"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Ingen utkomer",
+        "placeholder": "Leita ..."
+      },
+      "select": {
+        "placeholder": "Vel noko"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Let"
+      },
+      "file": {
+        "actions": {
+          "open": "Opna",
+          "save": "Lagra",
+          "select-folder": "Vel mappe"
+        },
+        "empty-filtered": "Ingen filer samsvarar med vilkåret",
+        "entry": {
+          "folder": "Mappe"
+        },
+        "filename-placeholder": "Filnamn",
+        "filter-placeholder": "Vilkår ...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Dato",
+          "descending": "↓",
+          "name": "Namn",
+          "size": "Storleik"
+        },
+        "title": {
+          "default": "Filval",
+          "open": "Opna fil",
+          "save": "Lagra fil",
+          "select-folder": "Vel mappe"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Alle",
+        "search-placeholder": "Leita etter symbol ...",
+        "title": "Vel eit symbol"
+      }
+    }
+  }
+}

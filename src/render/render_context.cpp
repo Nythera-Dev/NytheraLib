@@ -109,10 +109,10 @@ void RenderContext::initialize(GlSharedContext& shared) {
   m_backend->textureManager().probeExtensions();
   m_textRenderer.initialize(m_backend.get(), &m_backend->textureManager());
   m_glyphRenderer.initialize(
-      paths::assetPath("fonts/nythera-tabler.ttf").string(), m_backend.get(), &m_backend->textureManager(),
+      paths::sharedAssetPath("fonts/nythera-tabler.ttf").string(), m_backend.get(), &m_backend->textureManager(),
       !paths::usingFilesAssets()
   );
-  m_glyphRenderer.initializeDisplayFont(paths::assetPath("fonts/NytheraDisplay-Regular.ttf").string());
+  m_glyphRenderer.initializeDisplayFont(paths::sharedAssetPath("fonts/NytheraDisplay-Regular.ttf").string());
   m_textRenderer.setFontFamily(m_textFontFamily);
   m_textRenderer.setBaseDirection(m_textBaseDirRtl);
   ++m_textMetricsGeneration;

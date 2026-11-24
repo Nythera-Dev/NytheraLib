@@ -1,0 +1,257 @@
+{
+  "clipboard": {
+    "title": "Bộ nhớ tạm"
+  },
+  "common": {
+    "actions": {
+      "apply": "Áp dụng",
+      "cancel": "Hủy"
+    },
+    "states": {
+      "auto": "Tự động",
+      "off": "Tắt"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Cả ngày",
+      "events": "Sự kiện",
+      "no-events": "Không có sự kiện.",
+      "today": "Hôm nay"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Cấu hình cũ, bao gồm {path}, đang được chuyển đổi tạm thời trong bộ nhớ. Hãy cập nhật cấu hình gốc; Cài đặt và nythera config validate sẽ hiển thị cấu hình thay thế cần dùng.",
+      "config-migration-title": "Cần cập nhật cấu hình",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Phím tắt này nhận một phím không kèm phím bổ trợ.",
+      "keybind-invalid-printable": "Các phím ký tự (chữ cái, số, ký hiệu) cần một phím bổ trợ như Ctrl hoặc Alt.",
+      "keybind-invalid-super": "Không thể dùng phím Super/Windows trong các phím tắt của shell.",
+      "keybind-invalid-title": "Phím tắt không được phép"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Thanh: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Trước widget đầu tiên",
+        "start": "Sau widget đầu tiên"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Gọn",
+          "full": "Toàn bộ",
+          "none": "Không có"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Kết thúc",
+        "none": "Không có",
+        "start": "Bắt đầu"
+      },
+      "edge": {
+        "bottom": "Dưới cùng",
+        "left": "Trái",
+        "right": "Phải",
+        "top": "Trên"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Kim cương",
+          "golden": "Hoàng kim",
+          "melt": "Tan chảy",
+          "pixel": "Pixel",
+          "stripes": "Sọc"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Tất cả",
+          "none": "Không",
+          "official": "Chính thức"
+        }
+      },
+      "screenshot": {
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "Không",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "Tất cả",
+          "categories": "Danh mục",
+          "pinned": "Đã ghim",
+          "recent": "Gần đây"
+        },
+        "launcher-layout": {
+          "full": "Đầy đủ",
+          "simple": "Đơn giản"
+        },
+        "launcher-search-position": {
+          "bottom": "Dưới cùng",
+          "top": "Trên cùng"
+        },
+        "panel-placement": {
+          "attached": "Gắn vào",
+          "floating": "Nổi"
+        },
+        "panel-transparency": {
+          "glass": "Kính",
+          "soft": "Dịu",
+          "solid": "Đặc"
+        },
+        "password-style": {
+          "filled-circles": "Hình tròn đặc",
+          "random-icons": "Biểu tượng ngẫu nhiên"
+        },
+        "shadow-direction": {
+          "center": "Giữa",
+          "down": "Xuống",
+          "down-left": "Dưới Trái",
+          "down-right": "Dưới phải",
+          "left": "Trái",
+          "right": "Phải",
+          "up": "Hoạt động",
+          "up-left": "Trên Trái",
+          "up-right": "Trên bên phải"
+        },
+        "window-switcher-style": {
+          "carousel": "Băng chuyền",
+          "compact": "Thu gọn"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Tối",
+          "light": "Sáng"
+        },
+        "shell-mode": {
+          "follow": "Theo hình nền"
+        },
+        "source": {
+          "built-in": "Tích hợp sẵn",
+          "community": "Cộng đồng",
+          "custom": "Tùy chỉnh",
+          "wallpaper": "Hình nền"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Giữa",
+          "crop": "Cắt",
+          "fit": "Vừa",
+          "repeat": "Lặp lại",
+          "span": "Phủ",
+          "stretch": "Kéo giãn"
+        },
+        "order": {
+          "alphabetical": "Theo ABC",
+          "random": "Ngẫu nhiên"
+        },
+        "transition": {
+          "diamond": "Kim cương",
+          "disc": "Ổ đĩa",
+          "fade": "Mờ dần",
+          "golden": "Hoàng kim",
+          "honeycomb": "Tổ ong",
+          "melt": "Tan chảy",
+          "pixel": "Pixel",
+          "stripes": "Sọc",
+          "vortex": "Dòng xoáy",
+          "wipe": "Xóa",
+          "zoom": "Thu phóng"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Mặc định",
+        "destructive": "Nguy hiểm",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Chính",
+        "secondary": "Phụ"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "1 phút"
+    },
+    "file": {
+      "unknown": "Không xác định"
+    },
+    "relative": {
+      "days-ago": "{count} ngày trước",
+      "days-ago-plural": "{count} ngày trước",
+      "hours-ago": "{count} giờ trước",
+      "hours-ago-plural": "{count} giờ trước",
+      "just-now": "vừa mới",
+      "minutes-ago": "{count} phút trước",
+      "minutes-ago-plural": "{count} phút trước"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Không có kết quả",
+        "placeholder": "Tìm kiếm..."
+      },
+      "select": {
+        "placeholder": "Chọn một tùy chọn"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Màu sắc"
+      },
+      "file": {
+        "actions": {
+          "open": "Mở",
+          "save": "Lưu",
+          "select-folder": "Chọn thư mục"
+        },
+        "empty-filtered": "Không có tệp nào khớp với bộ lọc hiện tại",
+        "entry": {
+          "folder": "Thư mục"
+        },
+        "filename-placeholder": "Tên tệp",
+        "filter-placeholder": "Lọc...",
+        "sort": {
+          "ascending": "Lên",
+          "date": "Ngày",
+          "descending": "↓",
+          "name": "Tên",
+          "size": "Kích thước"
+        },
+        "title": {
+          "default": "Hộp thoại tệp",
+          "open": "Mở tệp",
+          "save": "Lưu tệp",
+          "select-folder": "Chọn thư mục"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Tất cả",
+        "search-placeholder": "Tìm kiếm ký tự…",
+        "title": "Chọn biểu tượng"
+      }
+    }
+  }
+}

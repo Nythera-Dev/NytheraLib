@@ -1,0 +1,280 @@
+{
+  "clipboard": {
+    "title": "剪贴板"
+  },
+  "common": {
+    "actions": {
+      "apply": "应用",
+      "cancel": "取消"
+    },
+    "states": {
+      "auto": "自动",
+      "off": "关闭"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "全天",
+      "events": "日程",
+      "no-events": "暂无日程。",
+      "today": "今天"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "请在源配置文件中更新 {path}。Nythera 仅在内存中临时兼容。执行 nythera config validate 命令查看所有必需的更改。",
+      "config-migration-title": "需要更新配置",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "该快捷键仅接受不带修饰键的单键。",
+      "keybind-invalid-printable": "字母、数字和符号键需要配合 Ctrl 或 Alt 等修饰键使用。",
+      "keybind-invalid-super": "Super/Windows 键无法用于 Shell 快捷键。",
+      "keybind-invalid-title": "不允许的快捷键"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "状态栏：{name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "向后展开",
+        "start": "向前展开"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "紧凑",
+          "full": "完整",
+          "none": "无"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "末端",
+        "none": "无",
+        "start": "起始"
+      },
+      "edge": {
+        "bottom": "底部",
+        "left": "左侧",
+        "right": "右侧",
+        "top": "顶部"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "菱形",
+          "disc": "圆盘",
+          "fade": "淡入淡出",
+          "golden": "黄金螺旋",
+          "honeycomb": "蜂巢",
+          "melt": "融化",
+          "pixel": "像素",
+          "stripes": "条纹",
+          "vortex": "漩涡",
+          "wipe": "擦除",
+          "zoom": "缩放"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "所有源",
+          "none": "无",
+          "official": "仅官方源"
+        }
+      },
+      "screenshot": {
+        "format": {
+          "jpeg": "JPEG",
+          "jxl": "JPEG XL",
+          "png": "PNG",
+          "webp": "WebP"
+        },
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "无",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "全部",
+          "categories": "类别",
+          "pinned": "已固定",
+          "recent": "最近使用"
+        },
+        "launcher-layout": {
+          "full": "完整",
+          "simple": "简洁"
+        },
+        "launcher-search-position": {
+          "bottom": "底部",
+          "top": "顶部"
+        },
+        "panel-placement": {
+          "attached": "吸附",
+          "floating": "悬浮"
+        },
+        "panel-transparency": {
+          "glass": "毛玻璃",
+          "soft": "柔和",
+          "solid": "纯色"
+        },
+        "password-style": {
+          "filled-circles": "实心圆点",
+          "random-icons": "随机图案"
+        },
+        "shadow-direction": {
+          "center": "居中",
+          "down": "向下",
+          "down-left": "左下",
+          "down-right": "右下",
+          "left": "向左",
+          "right": "向右",
+          "up": "向上",
+          "up-left": "左上",
+          "up-right": "右上"
+        },
+        "window-switcher-style": {
+          "carousel": "轮播",
+          "compact": "紧凑"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "深色",
+          "light": "浅色"
+        },
+        "shell-mode": {
+          "follow": "跟随"
+        },
+        "source": {
+          "built-in": "内置",
+          "community": "社区",
+          "custom": "自定义",
+          "wallpaper": "壁纸"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "居中",
+          "crop": "裁剪",
+          "fit": "适应",
+          "repeat": "平铺",
+          "span": "跨屏",
+          "stretch": "拉伸"
+        },
+        "order": {
+          "alphabetical": "按字母顺序",
+          "random": "随机"
+        },
+        "transition": {
+          "diamond": "菱形",
+          "disc": "圆盘",
+          "fade": "淡入淡出",
+          "golden": "黄金螺旋",
+          "honeycomb": "蜂巢",
+          "melt": "融化",
+          "pixel": "像素",
+          "stripes": "条纹",
+          "vortex": "漩涡",
+          "wipe": "擦除",
+          "zoom": "缩放"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "默认",
+        "destructive": "Destructive",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Primary",
+        "secondary": "Secondary"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1 分钟",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "未知"
+    },
+    "relative": {
+      "days-ago": "{count} 天前",
+      "days-ago-plural": "{count} 天前",
+      "hours-ago": "{count} 小时前",
+      "hours-ago-plural": "{count} 小时前",
+      "just-now": "刚刚",
+      "minutes-ago": "{count} 分钟前",
+      "minutes-ago-plural": "{count} 分钟前"
+    },
+    "units": {
+      "day": "{count} 天",
+      "day-plural": "{count} 天",
+      "hour": "{count} 小时",
+      "hour-plural": "{count} 小时",
+      "minute": "{count} 分钟",
+      "minute-plural": "{count} 分钟"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "无结果",
+        "placeholder": "搜索…"
+      },
+      "select": {
+        "placeholder": "选择一个选项"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "copy": "以当前格式复制颜色代码",
+        "title": "颜色"
+      },
+      "file": {
+        "actions": {
+          "open": "打开",
+          "save": "保存",
+          "select-folder": "选择文件夹"
+        },
+        "empty-filtered": "没有符合当前筛选条件的文件",
+        "entry": {
+          "folder": "文件夹"
+        },
+        "filename-placeholder": "文件名",
+        "filter-placeholder": "筛选…",
+        "sort": {
+          "ascending": "↑",
+          "date": "日期",
+          "descending": "↓",
+          "name": "名称",
+          "size": "大小"
+        },
+        "title": {
+          "default": "文件对话框",
+          "open": "打开文件",
+          "save": "保存文件",
+          "select-folder": "选择文件夹"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "全部",
+        "search-placeholder": "搜索图标…",
+        "title": "选择图标"
+      }
+    }
+  }
+}

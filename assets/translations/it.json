@@ -1,0 +1,273 @@
+{
+  "clipboard": {
+    "title": "Appunti"
+  },
+  "common": {
+    "actions": {
+      "apply": "Applica",
+      "cancel": "Annulla"
+    },
+    "states": {
+      "auto": "Automatico",
+      "off": "Disattivato"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Tutto il giorno",
+      "events": "Eventi",
+      "no-events": "Nessun evento.",
+      "today": "Oggi"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Aggiorna {path} nel source file. Nythera applica questa sostituzione solo temporaneamente. Esegui nythera config validate per elencare tutte le modifiche richieste.",
+      "config-migration-title": "È necessario l'aggiornamento della configurazione",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Questa scorciatoia accetta un singolo tasto senza modificatori.",
+      "keybind-invalid-printable": "I tasti stampabili (lettere, numeri, simboli) richiedono un modificatore come Ctrl o Alt.",
+      "keybind-invalid-super": "Il tasto Super/Windows non può essere usato nelle scorciatoie della shell.",
+      "keybind-invalid-title": "Scorciatoia non consentita"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Barra: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Dopo il primo widget",
+        "start": "Prima del primo widget"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compatta",
+          "full": "Completa",
+          "none": "Nessuna"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Fine",
+        "none": "Nessuna",
+        "start": "Inizio"
+      },
+      "edge": {
+        "bottom": "Basso",
+        "left": "Sinistra",
+        "right": "Destra",
+        "top": "Alto"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Diamond",
+          "disc": "Disco",
+          "fade": "Dissolvenza",
+          "golden": "Golden",
+          "honeycomb": "Nido d'ape",
+          "melt": "Melt",
+          "pixel": "Pixel",
+          "stripes": "Strisce",
+          "vortex": "Vortex",
+          "wipe": "Wipe",
+          "zoom": "Zoom"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Tutti",
+          "none": "Nessuno",
+          "official": "Ufficiali"
+        }
+      },
+      "screenshot": {
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "Nessuno",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "Tutto",
+          "categories": "Categorie",
+          "pinned": "Fissate",
+          "recent": "Recenti"
+        },
+        "launcher-layout": {
+          "full": "Completo",
+          "simple": "Semplice"
+        },
+        "launcher-search-position": {
+          "bottom": "Basso",
+          "top": "Alto"
+        },
+        "panel-placement": {
+          "attached": "Attaccato",
+          "floating": "Flottante"
+        },
+        "panel-transparency": {
+          "glass": "Vetro",
+          "soft": "Morbida",
+          "solid": "Solida"
+        },
+        "password-style": {
+          "filled-circles": "Cerchi pieni",
+          "random-icons": "Icone casuali"
+        },
+        "shadow-direction": {
+          "center": "Al Centro",
+          "down": "In basso",
+          "down-left": "In basso a sinistra",
+          "down-right": "In basso a destra",
+          "left": "Sinistra",
+          "right": "Destra",
+          "up": "In alto",
+          "up-left": "In alto a sinistra",
+          "up-right": "In alto a destra"
+        },
+        "window-switcher-style": {
+          "carousel": "Carosello",
+          "compact": "Compatto"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Scuro",
+          "light": "Chiaro"
+        },
+        "shell-mode": {
+          "follow": "Segui"
+        },
+        "source": {
+          "built-in": "Integrata",
+          "community": "Community",
+          "custom": "Personalizzata",
+          "wallpaper": "Sfondo"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centra",
+          "crop": "Ritaglia",
+          "fit": "Adatta",
+          "repeat": "Ripeti",
+          "span": "Distribuisci",
+          "stretch": "Allunga"
+        },
+        "order": {
+          "alphabetical": "Alfabetico",
+          "random": "Casuale"
+        },
+        "transition": {
+          "diamond": "Diamond",
+          "disc": "Disco",
+          "fade": "Dissolvenza",
+          "golden": "Golden",
+          "honeycomb": "Nido d'ape",
+          "melt": "Melt",
+          "pixel": "Pixel",
+          "stripes": "Strisce",
+          "vortex": "Vortex",
+          "wipe": "Tendina",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Predefinito",
+        "destructive": "Distruttivo",
+        "ghost": "Fantasma",
+        "outline": "Contorno",
+        "primary": "Colore primario",
+        "secondary": "Colore secondario"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Sconosciuto"
+    },
+    "relative": {
+      "days-ago": "{count} giorno fa",
+      "days-ago-plural": "{count} giorni fa",
+      "hours-ago": "{count} ora fa",
+      "hours-ago-plural": "{count} ore fa",
+      "just-now": "proprio ora",
+      "minutes-ago": "{count} min fa",
+      "minutes-ago-plural": "{count} min fa"
+    },
+    "units": {
+      "day": "{count} giorno",
+      "day-plural": "{count} giorni",
+      "hour": "{count} ora",
+      "hour-plural": "{count} ore",
+      "minute": "{count} minuto",
+      "minute-plural": "{count} minuti"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Nessun risultato",
+        "placeholder": "Cerca..."
+      },
+      "select": {
+        "placeholder": "Seleziona un'opzione"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Colore"
+      },
+      "file": {
+        "actions": {
+          "open": "Apri",
+          "save": "Salva",
+          "select-folder": "Seleziona cartella"
+        },
+        "empty-filtered": "Nessun file corrisponde al filtro corrente",
+        "entry": {
+          "folder": "Cartella"
+        },
+        "filename-placeholder": "Nome file",
+        "filter-placeholder": "Filtra...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Data",
+          "descending": "↓",
+          "name": "Nome",
+          "size": "Dimensione"
+        },
+        "title": {
+          "default": "Dialogo file",
+          "open": "Apri file",
+          "save": "Salva file",
+          "select-folder": "Seleziona cartella"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Tutte",
+        "search-placeholder": "Cerca glifi...",
+        "title": "Scegli un glifo"
+      }
+    }
+  }
+}

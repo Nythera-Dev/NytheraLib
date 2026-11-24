@@ -1,0 +1,40 @@
+{
+  "clipboard": {
+    "title": "剪貼簿"
+  },
+  "common": {
+    "actions": {
+      "apply": "應用",
+      "cancel": "取消"
+    },
+    "states": {
+      "auto": "自動",
+      "off": "關閉"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "全天",
+      "events": "事件",
+      "no-events": "無事件。",
+      "today": "今天"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-title": "需要更新配置",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "此快捷鍵僅接受單一按鍵，不可與修飾鍵(Ctrl, Alt或Super等)並用。",
+      "keybind-invalid-printable": "字母、數字及符號健需要配合修飾鍵 ( Ctrl 或是 Alt ) 使用。",
+      "keybind-invalid-super": "Super/Windows 鍵無法用於 Shell 快捷鍵。",
+      "keybind-invalid-title": "不允許的快捷鍵"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "狀態列：{name}"
+      }
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "clipboard": {
+    "title": "Vágólap"
+  },
+  "common": {
+    "actions": {
+      "apply": "Alkalmazás",
+      "cancel": "Mégse"
+    },
+    "states": {
+      "auto": "Automatikus",
+      "off": "Ki"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Egész nap",
+      "events": "Események",
+      "no-events": "Nincsenek események.",
+      "today": "Ma"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "A régi konfiguráció átvitel alatt áll a memóriában, beleértve a {path} elemet is. Frissítsd a forráskonfigurációt. A „Beállítások” menüpont és a nythera beállítások érvényesítése megmutatja, mit kell kicserélni.",
+      "config-migration-title": "A beállítások frissítésére van szükség",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Ez a gyorsbillentyű egyetlen billentyűt fogad el módosítók nélkül.",
+      "keybind-invalid-printable": "A nyomtatható billentyűk (betűk, számok, szimbólumok) módosító billentyűt igényelnek, mint például a Ctrl vagy az Alt.",
+      "keybind-invalid-super": "A Super/Windows billentyű nem használható shell gyorsbillentyűkben.",
+      "keybind-invalid-title": "Gyorsbillentyű nem engedélyezett"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Sáv: {name}"
+      }
+    },
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Kompakt",
+          "full": "Teljes",
+          "none": "Nincs"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Vége",
+        "none": "Nincs",
+        "start": "Eleje"
+      },
+      "edge": {
+        "bottom": "Alul",
+        "left": "Bal",
+        "right": "Jobb",
+        "top": "Felül"
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Összes",
+          "none": "Nincs",
+          "official": "Hivatalos"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Rögzített",
+          "floating": "Lebegő"
+        },
+        "panel-transparency": {
+          "glass": "Üveg",
+          "soft": "Lágy",
+          "solid": "Egyszínű"
+        },
+        "password-style": {
+          "filled-circles": "Kitöltött körök",
+          "random-icons": "Véletlenszerű ikonok"
+        },
+        "shadow-direction": {
+          "center": "Középre",
+          "down": "Le",
+          "down-left": "Lent balra",
+          "down-right": "Lent jobbra",
+          "left": "Balra",
+          "right": "Jobbra",
+          "up": "Fel",
+          "up-left": "Fent balra",
+          "up-right": "Fent jobbra"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Sötét",
+          "light": "Világos"
+        },
+        "source": {
+          "built-in": "Beépített",
+          "community": "Közösség",
+          "custom": "Egyéni",
+          "wallpaper": "Háttérkép"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Közép",
+          "crop": "Vágás",
+          "fit": "Illesztés",
+          "repeat": "Ismétlés",
+          "span": "Átnyúl",
+          "stretch": "Nyújtás"
+        },
+        "order": {
+          "alphabetical": "Betűrendes",
+          "random": "Véletlen"
+        },
+        "transition": {
+          "disc": "Lemez",
+          "fade": "Halványítás",
+          "honeycomb": "Méhsejt",
+          "stripes": "Csíkok",
+          "wipe": "Törlés",
+          "zoom": "Nagyítás"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Alapértelmezett",
+        "destructive": "Romboló",
+        "ghost": "Szellem",
+        "outline": "Körvonal",
+        "primary": "Elsődleges",
+        "secondary": "Másodlagos"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1p",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Ismeretlen"
+    },
+    "relative": {
+      "days-ago": "{count} napja",
+      "days-ago-plural": "{count} napja",
+      "hours-ago": "{count} órája",
+      "hours-ago-plural": "{count} órája",
+      "just-now": "épp most",
+      "minutes-ago": "{count} perce",
+      "minutes-ago-plural": "{count} perce"
+    },
+    "units": {
+      "day": "{count} nap",
+      "day-plural": "{count} nap",
+      "hour": "{count} óra",
+      "hour-plural": "{count} óra",
+      "minute": "{count} perc",
+      "minute-plural": "{count} perc"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Nincs találat",
+        "placeholder": "Keresés…"
+      },
+      "select": {
+        "placeholder": "Válassz egy opciót"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Szín"
+      },
+      "file": {
+        "actions": {
+          "open": "Megnyitás",
+          "save": "Mentés",
+          "select-folder": "Mappa kiválasztása"
+        },
+        "empty-filtered": "Nincs fájl, ami megfelelne az aktuális szűrőnek",
+        "entry": {
+          "folder": "Mappa"
+        },
+        "filename-placeholder": "Fájlnév",
+        "filter-placeholder": "Szűrés…",
+        "sort": {
+          "ascending": "Fel",
+          "date": "Dátum",
+          "descending": "le",
+          "name": "Név",
+          "size": "Méret"
+        },
+        "title": {
+          "default": "Fájl párbeszédpanel",
+          "open": "Fájl megnyitása",
+          "save": "Fájl mentése",
+          "select-folder": "Mappa kiválasztása"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Összes",
+        "search-placeholder": "Szimbólumok keresése…",
+        "title": "Válassz egy szimbólumot"
+      }
+    }
+  }
+}

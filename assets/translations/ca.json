@@ -1,0 +1,216 @@
+{
+  "clipboard": {
+    "title": "Porta-retalls"
+  },
+  "common": {
+    "actions": {
+      "apply": "Aplica",
+      "cancel": "Cancel·la"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Desactivat"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Tot el dia",
+      "events": "Esdeveniments",
+      "no-events": "No hi ha esdeveniments.",
+      "today": "Avui"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Actualitza {path} al fitxer font. Nythera només aplica aquest canvi temporalment. Executa nythera config validate per veure tots els canvis necessaris.",
+      "config-migration-title": "Cal actualitzar la configuració",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Aquesta drecera accepta una sola tecla sense modificadors.",
+      "keybind-invalid-printable": "Les tecles imprimibles (lletres, números, símbols) requereixen un modificador com Ctrl o Alt.",
+      "keybind-invalid-super": "La tecla Super/Windows no es pot utilitzar a les dreceres del shell.",
+      "keybind-invalid-title": "Drecera no permesa"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Barra: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Després del primer giny",
+        "start": "Abans del primer giny"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Maj+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Maj+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compacte",
+          "full": "Complet",
+          "none": "Cap"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Final",
+        "none": "Cap",
+        "start": "Inici"
+      },
+      "edge": {
+        "bottom": "Inferior",
+        "left": "Esquerra",
+        "right": "Dreta",
+        "top": "Superior"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Adjunt",
+          "floating": "Flotant"
+        },
+        "panel-transparency": {
+          "glass": "Vidre",
+          "soft": "Suau",
+          "solid": "Sòlid"
+        },
+        "password-style": {
+          "filled-circles": "Cercles plens",
+          "random-icons": "Icones aleatòries"
+        },
+        "shadow-direction": {
+          "center": "Centre",
+          "down": "Avall",
+          "down-left": "Avall esquerra",
+          "down-right": "Avall dreta",
+          "left": "Esquerra",
+          "right": "Dreta",
+          "up": "Amunt",
+          "up-left": "Amunt esquerra",
+          "up-right": "Amunt dreta"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Fosc",
+          "light": "Clar"
+        },
+        "source": {
+          "built-in": "Integrat",
+          "community": "Comunitat",
+          "custom": "Personalitzat",
+          "wallpaper": "Fons de pantalla"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centre",
+          "crop": "Retalla",
+          "fit": "Ajusta",
+          "repeat": "Repeteix",
+          "span": "Estesa",
+          "stretch": "Estira"
+        },
+        "order": {
+          "alphabetical": "Alfabètic",
+          "random": "Aleatori"
+        },
+        "transition": {
+          "disc": "Disc",
+          "fade": "Esvaeix",
+          "honeycomb": "Panell",
+          "stripes": "Ratlles",
+          "wipe": "Escombra",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Per defecte",
+        "destructive": "Destructiu",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Primari",
+        "secondary": "Secundari"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Desconegut"
+    },
+    "relative": {
+      "days-ago": "Fa {count} dia",
+      "days-ago-plural": "Fa {count} dies",
+      "hours-ago": "Fa {count} h",
+      "hours-ago-plural": "Fa {count} h",
+      "just-now": "ara mateix",
+      "minutes-ago": "Fa {count} min",
+      "minutes-ago-plural": "Fa {count} min"
+    },
+    "units": {
+      "day": "{count} dia",
+      "day-plural": "{count} dies",
+      "hour": "{count} hora",
+      "hour-plural": "{count} hores",
+      "minute": "{count} minut",
+      "minute-plural": "{count} minuts"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "No hi ha resultats",
+        "placeholder": "Cerca…"
+      },
+      "select": {
+        "placeholder": "Selecciona una opció"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Color"
+      },
+      "file": {
+        "actions": {
+          "open": "Obre",
+          "save": "Desa",
+          "select-folder": "Selecciona una carpeta"
+        },
+        "empty-filtered": "No hi ha fitxers que coincideixin amb el filtre",
+        "entry": {
+          "folder": "Carpeta"
+        },
+        "filename-placeholder": "Nom del fitxer",
+        "filter-placeholder": "Filtra…",
+        "sort": {
+          "ascending": "↑",
+          "date": "Data",
+          "descending": "↓",
+          "name": "Nom",
+          "size": "Mida"
+        },
+        "title": {
+          "default": "Diàleg de fitxer",
+          "open": "Obre un fitxer",
+          "save": "Desa un fitxer",
+          "select-folder": "Selecciona una carpeta"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Totes",
+        "search-placeholder": "Cerca glifs…",
+        "title": "Tria un glif"
+      }
+    }
+  }
+}

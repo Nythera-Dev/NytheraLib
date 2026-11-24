@@ -1,0 +1,257 @@
+{
+  "clipboard": {
+    "title": "Буфер обміну"
+  },
+  "common": {
+    "actions": {
+      "apply": "Застосувати",
+      "cancel": "Скасувати"
+    },
+    "states": {
+      "auto": "Авто",
+      "off": "Вимк."
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Весь день",
+      "events": "Події",
+      "no-events": "Подій немає.",
+      "today": "Сьогодні"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Оновіть {path} у вихідному файлі. Nythera застосовує цю заміну лише тимчасово. Виконайте команду \"nythera config validate\", щоб переглянути всі необхідні зміни.",
+      "config-migration-title": "Потрібно оновити конфігурацію",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Це поєднання клавіш приймає одну клавішу без модифікаторів.",
+      "keybind-invalid-printable": "Клавіші з друкованими символами (літери, цифри тощо) працюватимуть лише з модифікатором, як-от Ctrl або Alt.",
+      "keybind-invalid-super": "Клавіша Super/Windows не може бути використана у прив'язках клавіш оболонки.",
+      "keybind-invalid-title": "Прив'язка клавіш не дозволена"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Панель: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Після першого віджета",
+        "start": "Перед першим віджетом"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Компактний",
+          "full": "Повний",
+          "none": "Немає"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Кінець",
+        "none": "Немає",
+        "start": "Почати"
+      },
+      "edge": {
+        "bottom": "Внизу",
+        "left": "Ліворуч",
+        "right": "Праворуч",
+        "top": "Зверху"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Діамант",
+          "disc": "Диск",
+          "fade": "Поява з поступовим проявленням",
+          "golden": "Золотий переріз",
+          "honeycomb": "Стільники",
+          "melt": "Розплавлення",
+          "pixel": "Пікселі",
+          "stripes": "Смуги",
+          "vortex": "Вихор",
+          "wipe": "Витирання",
+          "zoom": "Масштабування"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Усі",
+          "none": "Немає",
+          "official": "Офіційні"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "Усі",
+          "categories": "Категорії",
+          "pinned": "Закріплені",
+          "recent": "Нещодавні"
+        },
+        "launcher-layout": {
+          "full": "Повний",
+          "simple": "Простий"
+        },
+        "launcher-search-position": {
+          "bottom": "Знизу",
+          "top": "Вгорі"
+        },
+        "panel-placement": {
+          "attached": "Прикріплений",
+          "floating": "Плаваюча"
+        },
+        "panel-transparency": {
+          "glass": "Скло",
+          "soft": "М'який",
+          "solid": "Суцільний"
+        },
+        "password-style": {
+          "filled-circles": "Заповнені кола",
+          "random-icons": "Випадкові іконки"
+        },
+        "shadow-direction": {
+          "center": "Центр",
+          "down": "Вниз",
+          "down-left": "Внизу ліворуч",
+          "down-right": "Внизу праворуч",
+          "left": "Ліворуч",
+          "right": "Праворуч",
+          "up": "Активно",
+          "up-left": "Вгору ліворуч",
+          "up-right": "Вгору праворуч"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Темний",
+          "light": "Світлий"
+        },
+        "source": {
+          "built-in": "Вбудована",
+          "community": "Від спільноти",
+          "custom": "Власна",
+          "wallpaper": "Тло екрана"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Центрувати",
+          "crop": "Обрізати",
+          "fit": "Заповнити",
+          "repeat": "Розмножити",
+          "span": "Розділити",
+          "stretch": "Розтягнути"
+        },
+        "order": {
+          "alphabetical": "Алфавітний",
+          "random": "Довільний"
+        },
+        "transition": {
+          "diamond": "Діамант",
+          "disc": "Круг",
+          "fade": "Проступання",
+          "golden": "Золотий переріз",
+          "honeycomb": "Стільники",
+          "melt": "Розплавлення",
+          "pixel": "Пікселі",
+          "stripes": "Смуги",
+          "vortex": "Вихор",
+          "wipe": "Штора",
+          "zoom": "Наближення"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Типово",
+        "destructive": "Деструктивна",
+        "ghost": "Без контуру й заповнення",
+        "outline": "Outline",
+        "primary": "Основний",
+        "secondary": "Другорядний"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "< 1 хв",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Невідомо"
+    },
+    "relative": {
+      "days-ago": "{count} день тому",
+      "days-ago-plural": "{count} днів тому",
+      "hours-ago": "{count} год тому",
+      "hours-ago-plural": "{count} год тому",
+      "just-now": "щойно",
+      "minutes-ago": "{count} хв тому",
+      "minutes-ago-plural": "{count} хв тому"
+    },
+    "units": {
+      "day": "{count} д",
+      "day-plural": "{count} д",
+      "hour": "{count} год",
+      "hour-plural": "{count} год",
+      "minute": "{count} хв",
+      "minute-plural": "{count} хв"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Немає результатів",
+        "placeholder": "Пошук…"
+      },
+      "select": {
+        "placeholder": "Обери опцію"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Колір"
+      },
+      "file": {
+        "actions": {
+          "open": "Відкрити",
+          "save": "Зберегти",
+          "select-folder": "Вибрати теку"
+        },
+        "empty-filtered": "Жодного файлу не відповідає поточному фільтру",
+        "entry": {
+          "folder": "Папка"
+        },
+        "filename-placeholder": "Ім'я файлу",
+        "filter-placeholder": "Фільтр…",
+        "sort": {
+          "ascending": "Вгору",
+          "date": "Дата",
+          "descending": "Розгорнути",
+          "name": "Ім'я",
+          "size": "Розмір"
+        },
+        "title": {
+          "default": "Діалог файлів",
+          "open": "Відкрити файл",
+          "save": "Зберегти файл",
+          "select-folder": "Вибрати теку"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Усі",
+        "search-placeholder": "Пошук символів…",
+        "title": "Обери іконку"
+      }
+    }
+  }
+}

@@ -27,6 +27,9 @@ endif
 # lsan_suppressions.cpp is only needed when address sanitizer is active.
 sanitize = get_option('b_sanitize') != 'none'
 
+tests_opt = get_option('tests')
+build_tests = tests_opt.enabled() or (tests_opt.auto() and get_option('buildtype') in ['debug', 'debugoptimized'] and not sanitize)
+
 # Hardened standard-library assertions in debug builds only. A std::clamp(v, lo, hi)
 # with hi < lo aborts here (distro packagers enable this in release, so users see
 # the same abort), surfacing inverted-bound bugs loudly during development so they
@@ -502,6 +505,8 @@ _nythera_system_dependencies = [
 _nythera_compile_definitions = [
   '-DNYTHERA_INSTALL_PREFIX="' + get_option('prefix') + '"',
   '-DNYTHERA_INSTALL_DATADIR="' + get_option('datadir') + '"',
+  '-DNYTHERA_LIB_INSTALL_PREFIX="' + get_option('prefix') + '"',
+  '-DNYTHERA_LIB_INSTALL_DATADIR="' + get_option('datadir') + '"',
   '-DNYTHERA_VERSION="' + meson.project_version() + '"',
 ]
 
@@ -572,6 +577,13 @@ pkg.generate(nythera_lib,
              xkbcommon_dep, gio_dep, curl_dep, nlohmann_dep, tomlplusplus_dep],
   extra_cflags: pkg_extra_cflags,
   libraries: pkg_extra_libraries,
+  variables: [
+    'assetsdir=${datadir}/nythera-lib/assets',
+  ],
+)
+
+install_subdir('assets',
+  install_dir: get_option('datadir') / 'nythera-lib',
 )
 
 install_headers(
@@ -1003,4 +1015,123 @@ if not get_option('system_libraries')
     install_dir: get_option('datadir') / 'licenses' / 'nythera-lib',
     rename: ['fzy.txt', 'material-color-utilities.txt', 'wuffs-apache.txt', 'wuffs-mit.txt'],
   )
+endif
+
+if build_tests
+  nythera_lib_test_dep = declare_dependency(
+    link_with: nythera_lib,
+    dependencies: _nythera_system_dependencies,
+    include_directories: [include_directories('src', '.', 'tests')],
+    compile_args: _nythera_compile_definitions,
+    sources: _protocol_headers,
+  )
+
+  _lib_test_env = environment()
+  _lib_test_env.set('NYTHERA_LIB_ASSETS_DIR', meson.project_source_root() / 'assets')
+
+  _cpp_test_names = [
+    'animation_manager',
+    'button_layout',
+    'cairo_glyph_renderer',
+    'cairo_text_renderer',
+    'calendar_view_passed_event',
+    'capsule_group_reconcile',
+    'cli_help',
+    'cli_parse',
+    'cli_schema',
+    'config_migration',
+    'config_path_resolution',
+    'config_widget',
+    'file_entry_row_layout',
+    'fixed_palette_json',
+    'freedesktop_key_file',
+    'grid_item_cursor',
+    'i18n_catalog',
+    'i18n_language_tag',
+    'ico_decoder',
+    'icon_resolver',
+    'image_file_loader_data_uri',
+    'image_source_log',
+    'inotify',
+    'input_area',
+    'input_bidi',
+    'input_dispatcher',
+    'input_password_mode',
+    'input_read_only',
+    'input_readline_shortcuts',
+    'jxl_decoder',
+    'log',
+    'monitor_selector',
+    'notification_filter',
+    'process',
+    'resource_paths',
+    'scheme',
+    'scrollbar_geometry',
+    'search_picker_selection',
+    'state_store',
+    'string_utils',
+    'surface_blur_region',
+    'surface_haze_render',
+    'theme_shell_mode',
+    'thumbnail_service',
+    'time_format',
+    'virtual_grid_view_gesture',
+    'wayland_output_scale',
+    'wayland_seat_keyboard',
+    'webp_decoder',
+  ]
+
+  foreach test_name : _cpp_test_names
+    test_exe = executable(test_name + '_test',
+      sources: files('tests' / (test_name + '_test.cpp')),
+      dependencies: nythera_lib_test_dep,
+      override_options: ['b_ndebug=false'],
+    )
+    test_args = []
+    if test_name == 'file_entry_row_layout'
+      test_args = [meson.project_source_root() / 'assets']
+    elif test_name == 'cairo_glyph_renderer'
+      test_args = [meson.project_source_root() / 'assets' / 'fonts' / 'nythera-tabler.ttf',
+                   meson.project_source_root() / 'assets' / 'fonts' / 'NytheraDisplay-Regular.ttf',
+                   meson.project_source_root() / 'assets' / 'fonts' / 'tabler.json']
+    endif
+    test(test_name, test_exe, args: test_args, env: _lib_test_env)
+  endforeach
+
+  tooltip_manager_test_exe = executable('tooltip_manager_test',
+    sources: files('tests/tooltip_manager_test.cpp'),
+    dependencies: nythera_lib_test_dep,
+    override_options: ['b_ndebug=false'],
+  )
+  test('tooltip_manager', tooltip_manager_test_exe, env: _lib_test_env, timeout: 10)
+
+  dbus_run_session = find_program('dbus-run-session', required: false)
+  sdbus_cpp_test_dep = dependency('sdbus-c++', required: false)
+  if dbus_run_session.found() and sdbus_cpp_test_dep.found()
+    url_open_test_exe = executable('url_open_test',
+      sources: files('tests/url_open_test.cpp'),
+      dependencies: [nythera_lib_test_dep, sdbus_cpp_test_dep],
+      override_options: ['b_ndebug=false'],
+    )
+    test('url_open', dbus_run_session, args: ['--', url_open_test_exe], env: _lib_test_env)
+  endif
+
+  wayland_server_dep = dependency('wayland-server')
+  native_data_transfer_test_exe = executable('native_data_transfer_test',
+    sources: files('tests/native_data_transfer_test.cpp'),
+    dependencies: [nythera_lib_test_dep, wayland_server_dep],
+    override_options: ['b_ndebug=false'],
+  )
+  test('native_data_transfer', native_data_transfer_test_exe, env: _lib_test_env, timeout: 15)
+
+  wlroots_test_dep = dependency('wlroots-0.20', required: false)
+  if wlroots_test_dep.found()
+    native_data_transfer_wlroots_test_exe = executable('native_data_transfer_wlroots_test',
+      sources: files('tests/native_data_transfer_wlroots_test.cpp'),
+      dependencies: [nythera_lib_test_dep, wayland_server_dep, wlroots_test_dep],
+      cpp_args: ['-DWLR_USE_UNSTABLE'],
+      override_options: ['b_ndebug=false'],
+    )
+    test('native_data_transfer_wlroots', native_data_transfer_wlroots_test_exe, env: _lib_test_env, timeout: 15)
+  endif
 endif

@@ -1,0 +1,354 @@
+{
+  "clipboard": {
+    "title": "Clipboard"
+  },
+  "common": {
+    "actions": {
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Off"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "All day",
+      "events": "Events",
+      "hide-past-events": "Hide {count} past event",
+      "hide-past-events-plural": "Hide {count} past events",
+      "no-events": "No events.",
+      "show-past-events": "Show {count} past event",
+      "show-past-events-plural": "Show {count} past events",
+      "today": "Today"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Update {path} in the source file. Nythera is applying this replacement only temporarily. Run nythera config validate to list every required change.",
+      "config-migration-title": "Configuration update needed",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "This shortcut accepts a single key without modifiers.",
+      "keybind-invalid-printable": "Printable keys (letters, numbers, symbols) require a modifier such as Ctrl or Alt.",
+      "keybind-invalid-super": "The Super/Windows key cannot be used in shell keybinds.",
+      "keybind-invalid-title": "Keybind not allowed"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Bar: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "After first widget",
+        "start": "Before first widget"
+      },
+      "bar": {
+        "transparency-custom": "Custom"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compact",
+          "full": "Full",
+          "none": "None"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "End",
+        "none": "None",
+        "start": "Start"
+      },
+      "edge": {
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right",
+        "top": "Top"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Diamond",
+          "disc": "Disc",
+          "fade": "Fade",
+          "golden": "Golden",
+          "honeycomb": "Honeycomb",
+          "melt": "Melt",
+          "pixel": "Pixel",
+          "stripes": "Stripes",
+          "vortex": "Vortex",
+          "wipe": "Wipe",
+          "zoom": "Zoom"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "All",
+          "none": "None",
+          "official": "Official"
+        }
+      },
+      "screenshot": {
+        "format": {
+          "jpeg": "JPEG",
+          "jxl": "JPEG XL",
+          "png": "PNG",
+          "webp": "WebP"
+        },
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "None",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "All",
+          "categories": "Categories",
+          "pinned": "Pinned",
+          "recent": "Recent"
+        },
+        "launcher-layout": {
+          "full": "Full",
+          "simple": "Simple"
+        },
+        "launcher-search-position": {
+          "bottom": "Bottom",
+          "top": "Top"
+        },
+        "launcher-branding": {
+          "off": "Off",
+          "glyph": "Glyph only",
+          "glyph-wordmark": "Glyph + wordmark"
+        },
+        "panel-placement": {
+          "attached": "Attached",
+          "floating": "Floating"
+        },
+        "panel-transparency": {
+          "glass": "Glass",
+          "soft": "Soft",
+          "solid": "Solid"
+        },
+        "panel-haze-mode": {
+          "static": "Static",
+          "animated": "Animated"
+        },
+        "panel-haze-background": {
+          "opaque": "Opaque",
+          "transparent": "Transparent"
+        },
+        "password-style": {
+          "filled-circles": "Filled Circles",
+          "random-icons": "Random Icons"
+        },
+        "shadow-direction": {
+          "center": "Center",
+          "down": "Down",
+          "down-left": "Down Left",
+          "down-right": "Down Right",
+          "left": "Left",
+          "right": "Right",
+          "up": "Up",
+          "up-left": "Up Left",
+          "up-right": "Up Right"
+        },
+        "window-switcher-style": {
+          "carousel": "Carousel",
+          "compact": "Compact",
+          "icons": "Icons Only"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Dark",
+          "light": "Light"
+        },
+        "shell-mode": {
+          "follow": "Follow"
+        },
+        "source": {
+          "built-in": "Built-In",
+          "community": "Community",
+          "custom": "Custom",
+          "wallpaper": "Wallpaper"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Center",
+          "crop": "Crop",
+          "fit": "Fit",
+          "repeat": "Repeat",
+          "span": "Span",
+          "stretch": "Stretch"
+        },
+        "order": {
+          "alphabetical": "Alphabetical",
+          "random": "Random"
+        },
+        "transition": {
+          "diamond": "Diamond",
+          "disc": "Disc",
+          "fade": "Fade",
+          "golden": "Golden",
+          "honeycomb": "Honeycomb",
+          "melt": "Melt",
+          "pixel": "Pixel",
+          "stripes": "Stripes",
+          "vortex": "Vortex",
+          "wipe": "Wipe",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Default",
+        "destructive": "Destructive",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Primary",
+        "secondary": "Secondary"
+      }
+    },
+    "haze": {
+      "workspace-map-window": "Workspace Map window",
+      "workspace-map": "Workspace Map panel",
+      "control-center": "Control Centre",
+      "window-inspector": "Window Inspector",
+      "launcher": "Launcher",
+      "settings": "Settings",
+      "clipboard": "Clipboard History",
+      "polkit": "Authentication dialogs",
+      "session": "Session menu",
+      "wallpaper": "Wallpaper picker",
+      "setup-wizard": "Setup Wizard",
+      "notifications": "Notifications",
+      "osd": "On-screen displays",
+      "window-switcher": "Window switcher",
+      "dock": "Dock",
+      "tooltips": "Tooltips",
+      "dock-context-menu": "Dock menus",
+      "context-menu": "Context menus",
+      "select-menu": "Dropdown menus",
+      "tray-menu": "Tray menus",
+      "tray-drawer": "Tray drawer",
+      "file-dialog": "File dialogs",
+      "color-picker": "Colour pickers",
+      "glyph-picker": "Icon pickers",
+      "search-picker": "Search pickers",
+      "desktop-widget-editor": "Widget editors",
+      "lock-screen": "Lock-screen panels",
+      "annotation": "Annotation toolbars",
+      "screenshot": "Screenshot toolbars",
+      "windows": "Other native windows",
+      "popups": "Other native popups"
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Unknown"
+    },
+    "relative": {
+      "days-ago": "{count} day ago",
+      "days-ago-plural": "{count} days ago",
+      "hours-ago": "{count} hr ago",
+      "hours-ago-plural": "{count} hr ago",
+      "just-now": "just now",
+      "minutes-ago": "{count} min ago",
+      "minutes-ago-plural": "{count} min ago"
+    },
+    "units": {
+      "day": "{count} day",
+      "day-plural": "{count} days",
+      "hour": "{count} hour",
+      "hour-plural": "{count} hours",
+      "minute": "{count} minute",
+      "minute-plural": "{count} minutes"
+    }
+  },
+  "ui": {
+    "controls": {
+      "key-names": {
+        "backspace": "Backspace",
+        "delete": "Delete",
+        "down": "Down",
+        "end": "End",
+        "enter": "Enter",
+        "escape": "Escape",
+        "home": "Home",
+        "insert": "Insert",
+        "left": "Left",
+        "numpad-enter": "Numpad Enter",
+        "page-down": "Page Down",
+        "page-up": "Page Up",
+        "right": "Right",
+        "space": "Space",
+        "tab": "Tab",
+        "up": "Up"
+      },
+      "search-picker": {
+        "empty": "No results",
+        "placeholder": "Search…"
+      },
+      "select": {
+        "placeholder": "Select an option"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "copy": "Copy color code in the current format",
+        "title": "Color"
+      },
+      "file": {
+        "actions": {
+          "open": "Open",
+          "save": "Save",
+          "select-folder": "Select Folder"
+        },
+        "empty-filtered": "No files match the current filter",
+        "entry": {
+          "folder": "Folder",
+          "folder-items": "{count} item",
+          "folder-items-plural": "{count} items"
+        },
+        "filename-placeholder": "Filename",
+        "filter-placeholder": "Filter…",
+        "sort": {
+          "ascending": "↑",
+          "date": "Date",
+          "descending": "↓",
+          "name": "Name",
+          "size": "Size"
+        },
+        "title": {
+          "default": "File Dialog",
+          "open": "Open File",
+          "save": "Save File",
+          "select-folder": "Select Folder"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "All",
+        "search-placeholder": "Search glyphs…",
+        "title": "Pick a Glyph"
+      }
+    }
+  }
+}

@@ -1,0 +1,284 @@
+{
+  "clipboard": {
+    "title": "Clipboard"
+  },
+  "common": {
+    "actions": {
+      "apply": "Aplică",
+      "cancel": "Anulează"
+    },
+    "states": {
+      "auto": "Automat",
+      "off": "Oprit"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Toată ziua",
+      "events": "Evenimente",
+      "hide-past-events": "Ascunde {count} eveniment trecut",
+      "hide-past-events-plural": "Ascunde {count} evenimente trecute",
+      "no-events": "Niciun eveniment.",
+      "show-past-events": "Arată {count} eveniment trecut",
+      "show-past-events-plural": "Arată {count} evenimente trecute",
+      "today": "Astăzi"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Actualizează {path} în fișierul sursă. Nythera aplică această înlocuire doar temporar. Rulează nythera config validate pentru a lista toate modificările necesare.",
+      "config-migration-title": "Este necesară actualizarea configurației",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Această comandă rapidă acceptă o singură tastă fără modificatori.",
+      "keybind-invalid-printable": "Tastele imprimabile (litere, cifre, simboluri) necesită un modificator precum Ctrl sau Alt.",
+      "keybind-invalid-super": "Tasta Super/Windows nu poate fi folosită în comenzile rapide ale shell-ului.",
+      "keybind-invalid-title": "Comandă rapidă nepermisă"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Bară: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "După primul widget",
+        "start": "Înainte de primul widget"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compact",
+          "full": "Complet",
+          "none": "Niciunul"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Sfârșit",
+        "none": "Niciunul",
+        "start": "Început"
+      },
+      "edge": {
+        "bottom": "Jos",
+        "left": "Stânga",
+        "right": "Dreapta",
+        "top": "Sus"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "Diamant",
+          "disc": "Disc",
+          "fade": "Estompare",
+          "golden": "Auriu",
+          "honeycomb": "Fagure",
+          "melt": "Topire",
+          "pixel": "Pixel",
+          "stripes": "Dungi",
+          "vortex": "Vârtej",
+          "wipe": "Glisare",
+          "zoom": "Zoom"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Toate",
+          "none": "Niciunul",
+          "official": "Oficiale"
+        }
+      },
+      "screenshot": {
+        "format": {
+          "jpeg": "JPEG",
+          "jxl": "JPEG XL",
+          "png": "PNG",
+          "webp": "WebP"
+        },
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "Niciunul",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "Toate",
+          "categories": "Categorii",
+          "pinned": "Fixate",
+          "recent": "Recente"
+        },
+        "launcher-layout": {
+          "full": "Complet",
+          "simple": "Simplu"
+        },
+        "launcher-search-position": {
+          "bottom": "Jos",
+          "top": "Sus"
+        },
+        "panel-placement": {
+          "attached": "Atașat",
+          "floating": "Flotant"
+        },
+        "panel-transparency": {
+          "glass": "Sticlă",
+          "soft": "Fin",
+          "solid": "Solid"
+        },
+        "password-style": {
+          "filled-circles": "Cercuri pline",
+          "random-icons": "Pictograme aleatorii"
+        },
+        "shadow-direction": {
+          "center": "Centru",
+          "down": "Jos",
+          "down-left": "Jos-stânga",
+          "down-right": "Jos-dreapta",
+          "left": "Stânga",
+          "right": "Dreapta",
+          "up": "Sus",
+          "up-left": "Sus-stânga",
+          "up-right": "Sus-dreapta"
+        },
+        "window-switcher-style": {
+          "carousel": "Carusel",
+          "compact": "Compact"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Întunecat",
+          "light": "Luminos"
+        },
+        "shell-mode": {
+          "follow": "Urmează"
+        },
+        "source": {
+          "built-in": "Integrat",
+          "community": "Comunitate",
+          "custom": "Personalizat",
+          "wallpaper": "Fundal"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centru",
+          "crop": "Decupare",
+          "fit": "Potrivire",
+          "repeat": "Repetare",
+          "span": "Extindere",
+          "stretch": "Întindere"
+        },
+        "order": {
+          "alphabetical": "Alfabetică",
+          "random": "Aleatorie"
+        },
+        "transition": {
+          "diamond": "Diamant",
+          "disc": "Disc",
+          "fade": "Estompare",
+          "golden": "Auriu",
+          "honeycomb": "Fagure",
+          "melt": "Topire",
+          "pixel": "Pixel",
+          "stripes": "Dungi",
+          "vortex": "Vârtej",
+          "wipe": "Glisare",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Implicit",
+        "destructive": "Distructiv",
+        "ghost": "Fantomă",
+        "outline": "Contur",
+        "primary": "Principal",
+        "secondary": "Secundar"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1 min",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Necunoscut"
+    },
+    "relative": {
+      "days-ago": "{count} zi în urmă",
+      "days-ago-plural": "{count} zile în urmă",
+      "hours-ago": "{count} h în urmă",
+      "hours-ago-plural": "{count} h în urmă",
+      "just-now": "chiar acum",
+      "minutes-ago": "{count} min în urmă",
+      "minutes-ago-plural": "{count} min în urmă"
+    },
+    "units": {
+      "day": "{count} zi",
+      "day-plural": "{count} zile",
+      "hour": "{count} oră",
+      "hour-plural": "{count} ore",
+      "minute": "{count} minut",
+      "minute-plural": "{count} minute"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Niciun rezultat",
+        "placeholder": "Caută…"
+      },
+      "select": {
+        "placeholder": "Selectează o opțiune"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "copy": "Copiază codul culorii în formatul curent",
+        "title": "Culoare"
+      },
+      "file": {
+        "actions": {
+          "open": "Deschide",
+          "save": "Salvează",
+          "select-folder": "Selectează folderul"
+        },
+        "empty-filtered": "Niciun fișier nu corespunde filtrului curent",
+        "entry": {
+          "folder": "Folder"
+        },
+        "filename-placeholder": "Nume fișier",
+        "filter-placeholder": "Filtrează…",
+        "sort": {
+          "ascending": "↑",
+          "date": "Dată",
+          "descending": "↓",
+          "name": "Nume",
+          "size": "Dimensiune"
+        },
+        "title": {
+          "default": "Dialog fișier",
+          "open": "Deschide fișier",
+          "save": "Salvează fișier",
+          "select-folder": "Selectează folderul"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Toate",
+        "search-placeholder": "Caută pictograme…",
+        "title": "Alege o pictogramă"
+      }
+    }
+  }
+}

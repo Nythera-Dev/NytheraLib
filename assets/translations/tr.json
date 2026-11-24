@@ -1,0 +1,226 @@
+{
+  "clipboard": {
+    "title": "Pano"
+  },
+  "common": {
+    "actions": {
+      "apply": "Uygula",
+      "cancel": "İptal"
+    },
+    "states": {
+      "auto": "Otomatik",
+      "off": "Kapat"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Tüm gün",
+      "events": "Etkinlikler",
+      "no-events": "Etkinlik yok.",
+      "today": "Bugün"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Kaynak dosyadaki {path} konumunu güncelleyin. Nythera bu değişimi sadece geçici olarak uyguluyor. Gerekli tüm değişiklikleri listelemek için nythera config validate komutunu çalıştırın.",
+      "config-migration-title": "Yapılandırma güncellemesi gerekiyor",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Bu kısayol, değiştirici olmadan yalnızca tek bir tuş kabul eder.",
+      "keybind-invalid-printable": "Yazdırılabilir tuşlar (harfler, sayılar, semboller) Ctrl veya Alt gibi bir değiştirici tuş gerektirir.",
+      "keybind-invalid-super": "Super/Windows tuşu sistem tuş atamalarında kullanılamaz.",
+      "keybind-invalid-title": "Tuş atamasına izin verilmiyor"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Çubuk: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "İlk araçtan sonra",
+        "start": "İlk araçtan önce"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Kompakt",
+          "full": "Tam",
+          "none": "Yok"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Son",
+        "none": "Hiçbiri",
+        "start": "Baş"
+      },
+      "edge": {
+        "bottom": "Alt",
+        "left": "Sol",
+        "right": "Sağ",
+        "top": "Üst"
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Tümü",
+          "none": "Hiçbiri",
+          "official": "Resmi"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Bitişik",
+          "floating": "Yüzen"
+        },
+        "panel-transparency": {
+          "glass": "Cam",
+          "soft": "Yumuşak",
+          "solid": "Mat"
+        },
+        "password-style": {
+          "filled-circles": "Dolu Daireler",
+          "random-icons": "Rastgele Simgeler"
+        },
+        "shadow-direction": {
+          "center": "Orta",
+          "down": "Aşağı",
+          "down-left": "Sol Aşağı",
+          "down-right": "Sağ Aşağı",
+          "left": "Sol",
+          "right": "Sağ",
+          "up": "Yukarı",
+          "up-left": "Sol Yukarı",
+          "up-right": "Sağ Yukarı"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Koyu",
+          "light": "Açık"
+        },
+        "shell-mode": {
+          "follow": "Takip et"
+        },
+        "source": {
+          "built-in": "Dahili",
+          "community": "Topluluk",
+          "custom": "Özel",
+          "wallpaper": "Duvar Kağıdı"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Ortala",
+          "crop": "Krıp",
+          "fit": "Sığdır",
+          "repeat": "Tekrarla",
+          "span": "Ger",
+          "stretch": "Genişlet"
+        },
+        "order": {
+          "alphabetical": "Alfabetik",
+          "random": "Rastgele"
+        },
+        "transition": {
+          "disc": "Disk",
+          "fade": "Solma",
+          "honeycomb": "Bal Peteği",
+          "stripes": "Çubuklar",
+          "wipe": "Sil",
+          "zoom": "Yakınlaştır"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Varsayılan",
+        "destructive": "Yıkıcı",
+        "ghost": "Hayalet",
+        "outline": "Dış Çizgili",
+        "primary": "Birincil",
+        "secondary": "İkincil"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1dk",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Bilinmiyor"
+    },
+    "relative": {
+      "days-ago": "{count} gün önce",
+      "days-ago-plural": "{count} gün önce",
+      "hours-ago": "{count} saat önce",
+      "hours-ago-plural": "{count} saat önce",
+      "just-now": "şimdi",
+      "minutes-ago": "{count} dk önce",
+      "minutes-ago-plural": "{count} dk önce"
+    },
+    "units": {
+      "day": "{count} gün",
+      "day-plural": "{count} gün",
+      "hour": "{count} saat",
+      "hour-plural": "{count} saat",
+      "minute": "{count} dakika",
+      "minute-plural": "{count} dakika"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Sonuç yok",
+        "placeholder": "Ara..."
+      },
+      "select": {
+        "placeholder": "Bir seçenek seçin"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Renk"
+      },
+      "file": {
+        "actions": {
+          "open": "Aç",
+          "save": "Kaydet",
+          "select-folder": "Klasörü Seç"
+        },
+        "empty-filtered": "Mevcut filtreye uyan dosya yok",
+        "entry": {
+          "folder": "Klasör"
+        },
+        "filename-placeholder": "Dosya adı",
+        "filter-placeholder": "Filtre...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Tarih",
+          "descending": "↓",
+          "name": "Ad",
+          "size": "Boyut"
+        },
+        "title": {
+          "default": "Dosya İletişim Kutusu",
+          "open": "Dosya Aç",
+          "save": "Dosyayı Kaydet",
+          "select-folder": "Klasör Seç"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Tümü",
+        "search-placeholder": "Sembol ara...",
+        "title": "Bir Sembol Seç"
+      }
+    }
+  }
+}

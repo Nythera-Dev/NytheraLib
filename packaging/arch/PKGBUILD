@@ -13,7 +13,7 @@ makedepends=(meson ninja pkgconf stb wayland-protocols)
 provides=(libnythera_lib.so)
 
 build() {
-  arch-meson "$startdir/../.." "$srcdir/build"
+  arch-meson "$startdir/../.." "$srcdir/build" -Dtests=disabled
   meson compile -C "$srcdir/build"
 }
 

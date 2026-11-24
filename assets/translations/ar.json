@@ -1,0 +1,226 @@
+{
+  "clipboard": {
+    "title": "الحافظة"
+  },
+  "common": {
+    "actions": {
+      "apply": "تطبيق",
+      "cancel": "إلغاء"
+    },
+    "states": {
+      "auto": "تلقائي",
+      "off": "متوقف"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "طوال اليوم",
+      "events": "الأحداث",
+      "no-events": "لا توجد أحداث.",
+      "today": "اليوم"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "حدّث {path} في الملف المصدر. يطبّق Nythera هذا الاستبدال مؤقتاً فقط. شغّل nythera config validate لعرض جميع التغييرات المطلوبة.",
+      "config-migration-title": "يلزم تحديث الإعدادات",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "يقبل هذا الاختصار مفتاحاً واحداً بدون معدّلات.",
+      "keybind-invalid-printable": "المفاتيح القابلة للطباعة (أحرف، أرقام، رموز) تتطلب معدّلاً مثل Ctrl أو Alt.",
+      "keybind-invalid-super": "لا يمكن استخدام مفتاح Super/Windows في اختصارات الغلاف (واجهة الأوامر).",
+      "keybind-invalid-title": "الاختصار غير مسموح به"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "الشريط: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "بعد الودجت الأولى",
+        "start": "قبل الودجت الأولى"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "مدمج",
+          "full": "كامل",
+          "none": "بدون"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "النهاية",
+        "none": "بدون",
+        "start": "البداية"
+      },
+      "edge": {
+        "bottom": "أسفل",
+        "left": "يسار",
+        "right": "يمين",
+        "top": "أعلى"
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "الكل",
+          "none": "لا شيء",
+          "official": "الرسمية"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "ملتصق",
+          "floating": "عائم"
+        },
+        "panel-transparency": {
+          "glass": "زجاجي",
+          "soft": "ناعم",
+          "solid": "صلب"
+        },
+        "password-style": {
+          "filled-circles": "دوائر ممتلئة",
+          "random-icons": "رموز عشوائية"
+        },
+        "shadow-direction": {
+          "center": "الوسط",
+          "down": "أسفل",
+          "down-left": "أسفل اليسار",
+          "down-right": "أسفل اليمين",
+          "left": "يسار",
+          "right": "يمين",
+          "up": "أعلى",
+          "up-left": "أعلى اليسار",
+          "up-right": "أعلى اليمين"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "داكن",
+          "light": "فاتح"
+        },
+        "shell-mode": {
+          "follow": "تابع"
+        },
+        "source": {
+          "built-in": "مدمج",
+          "community": "المجتمع",
+          "custom": "مخصص",
+          "wallpaper": "الخلفية"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "توسيط",
+          "crop": "قص",
+          "fit": "ملائمة",
+          "repeat": "تكرار",
+          "span": "امتداد",
+          "stretch": "تمديد"
+        },
+        "order": {
+          "alphabetical": "أبجدي",
+          "random": "عشوائي"
+        },
+        "transition": {
+          "disc": "قرص",
+          "fade": "تلاشي",
+          "honeycomb": "خلية نحل",
+          "stripes": "شرائط",
+          "wipe": "مسح",
+          "zoom": "تكبير"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "افتراضي",
+        "destructive": "تدميري",
+        "ghost": "شبح",
+        "outline": "مخطط",
+        "primary": "رئيسي",
+        "secondary": "ثانوي"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1 دقيقة",
+      "three-parts": "{first} و{second} و{third}",
+      "two-parts": "{first} و{second}"
+    },
+    "file": {
+      "unknown": "غير معروف"
+    },
+    "relative": {
+      "days-ago": "منذ {count} يوم",
+      "days-ago-plural": "منذ {count} أيام",
+      "hours-ago": "منذ {count} ساعة",
+      "hours-ago-plural": "منذ {count} ساعات",
+      "just-now": "الآن",
+      "minutes-ago": "منذ {count} دقيقة",
+      "minutes-ago-plural": "منذ {count} دقائق"
+    },
+    "units": {
+      "day": "{count} يوم",
+      "day-plural": "{count} أيام",
+      "hour": "{count} ساعة",
+      "hour-plural": "{count} ساعات",
+      "minute": "{count} دقيقة",
+      "minute-plural": "{count} دقائق"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "لا توجد نتائج",
+        "placeholder": "بحث..."
+      },
+      "select": {
+        "placeholder": "حدد خيارًا"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "اللون"
+      },
+      "file": {
+        "actions": {
+          "open": "فتح",
+          "save": "حفظ",
+          "select-folder": "تحديد المجلد"
+        },
+        "empty-filtered": "لا توجد ملفات تطابق التصفية الحالية",
+        "entry": {
+          "folder": "مجلد"
+        },
+        "filename-placeholder": "اسم الملف",
+        "filter-placeholder": "تصفية...",
+        "sort": {
+          "ascending": "↑",
+          "date": "التاريخ",
+          "descending": "↓",
+          "name": "الاسم",
+          "size": "الحجم"
+        },
+        "title": {
+          "default": "نافذة الملفات",
+          "open": "فتح ملف",
+          "save": "حفظ الملف",
+          "select-folder": "تحديد مجلد"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "الكل",
+        "search-placeholder": "البحث عن رموز…",
+        "title": "اختر رمزًا"
+      }
+    }
+  }
+}

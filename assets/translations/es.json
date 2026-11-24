@@ -1,0 +1,240 @@
+{
+  "clipboard": {
+    "title": "Portapapeles"
+  },
+  "common": {
+    "actions": {
+      "apply": "Aplicar",
+      "cancel": "Cancelar"
+    },
+    "states": {
+      "auto": "Automático",
+      "off": "Apagado"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Todo el día",
+      "events": "Eventos",
+      "no-events": "No hay eventos.",
+      "today": "Hoy"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "Actualiza {path} en el archivo de origen. Nythera está aplicando este reemplazo solo temporalmente. Ejecuta nythera config validate para listar todos los cambios necesarios.",
+      "config-migration-title": "Se necesita actualizar configuración",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Este atajo acepta una sola tecla sin modificadores.",
+      "keybind-invalid-printable": "Las teclas imprimibles (letras, números, símbolos) requieren un modificador como Ctrl o Alt.",
+      "keybind-invalid-super": "La tecla Super/Windows no se puede usar en los atajos de teclado del shell.",
+      "keybind-invalid-title": "Atajo de teclado no permitido"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Barra: {name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "Después del primer widget",
+        "start": "Antes del primer widget"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Compacto",
+          "full": "Completo",
+          "none": "Ninguno"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Fin",
+        "none": "Ninguno",
+        "start": "Inicio"
+      },
+      "edge": {
+        "bottom": "Abajo",
+        "left": "Izquierda",
+        "right": "Derecha",
+        "top": "Arriba"
+      },
+      "lockscreen": {
+        "transition": {
+          "disc": "Disco",
+          "fade": "Desvanecer",
+          "honeycomb": "Panal de abeja",
+          "stripes": "Rayas",
+          "wipe": "Limpiar",
+          "zoom": "Zoom"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "Todos",
+          "none": "Ninguno",
+          "official": "Oficial"
+        }
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Anclado",
+          "floating": "Flotante"
+        },
+        "panel-transparency": {
+          "glass": "Cristal",
+          "soft": "Suave",
+          "solid": "Sólido"
+        },
+        "password-style": {
+          "filled-circles": "Círculos rellenos",
+          "random-icons": "Iconos aleatorios"
+        },
+        "shadow-direction": {
+          "center": "Centro",
+          "down": "Abajo",
+          "down-left": "Abajo izquierda",
+          "down-right": "Abajo derecha",
+          "left": "Izquierda",
+          "right": "Derecha",
+          "up": "Arriba",
+          "up-left": "Arriba izquierda",
+          "up-right": "Arriba derecha"
+        },
+        "window-switcher-style": {
+          "carousel": "Carousel",
+          "compact": "Compacto "
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Oscuro",
+          "light": "Claro"
+        },
+        "shell-mode": {
+          "follow": "Seguir"
+        },
+        "source": {
+          "built-in": "Integrado",
+          "community": "Comunidad",
+          "custom": "Personalizado",
+          "wallpaper": "Fondo de Pantalla"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Centro",
+          "crop": "Recortar",
+          "fit": "Ajustar",
+          "repeat": "Repetir",
+          "span": "Extensión",
+          "stretch": "Estirar"
+        },
+        "order": {
+          "alphabetical": "Alfabético",
+          "random": "Aleatorio"
+        },
+        "transition": {
+          "disc": "Disco",
+          "fade": "Desvanecer",
+          "honeycomb": "Panal",
+          "stripes": "Rayas",
+          "wipe": "Barrido",
+          "zoom": "Zoom"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Por defecto",
+        "destructive": "Destructivo",
+        "ghost": "Fantasma",
+        "outline": "Contorno",
+        "primary": "Primario",
+        "secondary": "Secundario"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "Desconocido"
+    },
+    "relative": {
+      "days-ago": "hace {count} día",
+      "days-ago-plural": "hace {count} días",
+      "hours-ago": "hace {count} h",
+      "hours-ago-plural": "hace {count} horas",
+      "just-now": "justo ahora",
+      "minutes-ago": "hace {count} minuto",
+      "minutes-ago-plural": "hace {count} minutos"
+    },
+    "units": {
+      "day": "{count} día",
+      "day-plural": "{count} días",
+      "hour": "{count} hora",
+      "hour-plural": "{count} horas",
+      "minute": "{count} minuto",
+      "minute-plural": "{count} minutos"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Sin resultados",
+        "placeholder": "Buscar..."
+      },
+      "select": {
+        "placeholder": "Selecciona una opción"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Color"
+      },
+      "file": {
+        "actions": {
+          "open": "Abrir",
+          "save": "Guardar",
+          "select-folder": "Selecciona carpeta"
+        },
+        "empty-filtered": "No hay archivos que coincidan con el filtro actual",
+        "entry": {
+          "folder": "Carpeta"
+        },
+        "filename-placeholder": "Nombre de archivo",
+        "filter-placeholder": "Filtrar...",
+        "sort": {
+          "ascending": "↑",
+          "date": "Fecha",
+          "descending": "↓",
+          "name": "Nombre",
+          "size": "Tamaño"
+        },
+        "title": {
+          "default": "Selector de archivos",
+          "open": "Abrir archivo",
+          "save": "Guardar archivo",
+          "select-folder": "Seleccionar Carpeta"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Todas",
+        "search-placeholder": "Buscar glifos…",
+        "title": "Elegir un glifo"
+      }
+    }
+  }
+}

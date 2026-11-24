@@ -1,0 +1,199 @@
+{
+  "clipboard": {
+    "title": "Schowek"
+  },
+  "common": {
+    "actions": {
+      "apply": "Zastosuj",
+      "cancel": "Anuluj"
+    },
+    "states": {
+      "auto": "Auto",
+      "off": "Wyłączone"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "Całodziennie",
+      "events": "Zdarzenia",
+      "no-events": "Brak zdarzeń.",
+      "today": "Dzisiaj "
+    }
+  },
+  "notifications": {
+    "internal": {
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "Ten skrót przyjmuje jeden klawisz bez modyfikatorów.",
+      "keybind-invalid-printable": "Klawishe drukowalne (litery, cyfry, symbole) wymagają modyfikatora, takiego jak Ctrl lub Alt.",
+      "keybind-invalid-super": "Klawisz Super/Windows nie może być używany w skrótach shella.",
+      "keybind-invalid-title": "Skrót niedozwolony"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "Pasek: {name}"
+      }
+    },
+    "options": {
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "Kompaktowy",
+          "full": "Pełny",
+          "none": "Brak"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "Koniec",
+        "none": "Brak",
+        "start": "Początek"
+      },
+      "edge": {
+        "bottom": "Dół",
+        "left": "Lewo",
+        "right": "Prawo",
+        "top": "Góra"
+      },
+      "shell": {
+        "panel-placement": {
+          "attached": "Przyłączone",
+          "floating": "Pływające"
+        },
+        "panel-transparency": {
+          "glass": "Szklane",
+          "soft": "Miękkie",
+          "solid": "Lite"
+        },
+        "password-style": {
+          "filled-circles": "Wypełnione kółka",
+          "random-icons": "Losowe ikony"
+        },
+        "shadow-direction": {
+          "center": "Środek",
+          "down": "W dół",
+          "down-left": "W dół w lewo",
+          "down-right": "W dół w prawo",
+          "left": "W lewo",
+          "right": "W prawo",
+          "up": "W górę",
+          "up-left": "W górę w lewo",
+          "up-right": "W górę w prawo"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "Ciemny",
+          "light": "Jasny"
+        },
+        "source": {
+          "built-in": "Wbudowany",
+          "community": "Społeczność",
+          "custom": "Niestandardowy",
+          "wallpaper": "Tapeta"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "Środek",
+          "crop": "Kadruj",
+          "fit": "Dopasuj",
+          "repeat": "Powtórz",
+          "stretch": "Rozciągnij"
+        },
+        "order": {
+          "alphabetical": "Alfabetycznie",
+          "random": "Losowo"
+        },
+        "transition": {
+          "disc": "Dysk",
+          "fade": "Zanik",
+          "honeycomb": "Plaster miodu",
+          "stripes": "Paski",
+          "wipe": "Przesunięcie",
+          "zoom": "Przybliżenie"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "Domyślny",
+        "destructive": "Niszczący",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "primary": "Podstawowy",
+        "secondary": "Pomocniczy"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "<1m"
+    },
+    "file": {
+      "unknown": "Nieznane"
+    },
+    "relative": {
+      "days-ago": "{count} dzień temu",
+      "days-ago-plural": "{count} dni temu",
+      "hours-ago": "{count} h temu",
+      "hours-ago-plural": "{count} h temu",
+      "just-now": "właśnie teraz",
+      "minutes-ago": "{count} min temu",
+      "minutes-ago-plural": "{count} min temu"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "Brak wyników",
+        "placeholder": "Szukaj…"
+      },
+      "select": {
+        "placeholder": "Wybierz opcję"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "title": "Kolor"
+      },
+      "file": {
+        "actions": {
+          "open": "Otwórz",
+          "save": "Zapisz",
+          "select-folder": "Wybierz folder"
+        },
+        "empty-filtered": "Brak plików zgodnych z aktualnym filtrem",
+        "entry": {
+          "folder": "Folder"
+        },
+        "filename-placeholder": "Nazwa pliku",
+        "filter-placeholder": "Filtruj…",
+        "sort": {
+          "ascending": "↑",
+          "date": "Data",
+          "descending": "↓",
+          "name": "Nazwa",
+          "size": "Rozmiar"
+        },
+        "title": {
+          "default": "Dialog pliku",
+          "open": "Otwórz plik",
+          "save": "Zapisz plik",
+          "select-folder": "Wybierz folder"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "Wszystkie",
+        "search-placeholder": "Szukaj glifów…",
+        "title": "Wybierz glif"
+      }
+    }
+  }
+}

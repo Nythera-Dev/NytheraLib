@@ -1,0 +1,284 @@
+{
+  "clipboard": {
+    "title": "クリップボード"
+  },
+  "common": {
+    "actions": {
+      "apply": "適用",
+      "cancel": "キャンセル"
+    },
+    "states": {
+      "auto": "自動",
+      "off": "オフ"
+    }
+  },
+  "control-center": {
+    "calendar": {
+      "all-day": "終日",
+      "events": "予定",
+      "hide-past-events": "過去の予定{count}件を非表示",
+      "hide-past-events-plural": "過去の予定{count}件を非表示",
+      "no-events": "予定はありません。",
+      "show-past-events": "過去の予定{count}件を表示",
+      "show-past-events-plural": "過去の予定{count}件を表示",
+      "today": "今日"
+    }
+  },
+  "notifications": {
+    "internal": {
+      "config-migration-body": "ソースファイル内の{path}を更新してください。Nytheraはこの置換を一時的にのみ適用しています。必要な変更をすべて確認するには、nythera config validateを実行してください。",
+      "config-migration-title": "設定の更新が必要です",
+      "keybind-app": "Nythera",
+      "keybind-invalid-modifier": "このショートカットには、修飾キーを使わない単一のキーを指定できます。",
+      "keybind-invalid-printable": "文字入力キー（英字、数字、記号）を使用するには、CtrlやAltなどの修飾キーが必要です。",
+      "keybind-invalid-super": "シェルのキーバインドではSuper/Windowsキーを使用できません。",
+      "keybind-invalid-title": "このキーバインドは使用できません"
+    }
+  },
+  "settings": {
+    "entities": {
+      "bar": {
+        "label": "バー：{name}"
+      }
+    },
+    "options": {
+      "accordion-direction": {
+        "end": "最初のウィジェットの後",
+        "start": "最初のウィジェットの前"
+      },
+      "clipboard": {
+        "auto-paste": {
+          "ctrl-shift-v": "Ctrl+Shift+V",
+          "ctrl-v": "Ctrl+V",
+          "shift-insert": "Shift+Insert"
+        }
+      },
+      "control-center": {
+        "sidebar": {
+          "compact": "コンパクト",
+          "full": "フル表示",
+          "none": "なし"
+        }
+      },
+      "dock-launcher-position": {
+        "end": "末尾",
+        "none": "なし",
+        "start": "先頭"
+      },
+      "edge": {
+        "bottom": "下",
+        "left": "左",
+        "right": "右",
+        "top": "上"
+      },
+      "lockscreen": {
+        "transition": {
+          "diamond": "ダイヤモンド",
+          "disc": "ディスク",
+          "fade": "フェード",
+          "golden": "ゴールデン",
+          "honeycomb": "ハニカム",
+          "melt": "溶解",
+          "pixel": "ピクセル",
+          "stripes": "ストライプ",
+          "vortex": "渦巻き",
+          "wipe": "ワイプ",
+          "zoom": "ズーム"
+        }
+      },
+      "plugins": {
+        "auto-update": {
+          "all": "すべて",
+          "none": "なし",
+          "official": "公式"
+        }
+      },
+      "screenshot": {
+        "format": {
+          "jpeg": "JPEG",
+          "jxl": "JPEG XL",
+          "png": "PNG",
+          "webp": "WebP"
+        },
+        "region-modifier": {
+          "alt": "Alt",
+          "ctrl": "Ctrl",
+          "none": "なし",
+          "shift": "Shift",
+          "super": "Super"
+        }
+      },
+      "shell": {
+        "launcher-default-view": {
+          "all": "すべて",
+          "categories": "カテゴリ",
+          "pinned": "ピン留め",
+          "recent": "最近使用した項目"
+        },
+        "launcher-layout": {
+          "full": "フル",
+          "simple": "シンプル"
+        },
+        "launcher-search-position": {
+          "bottom": "下",
+          "top": "上"
+        },
+        "panel-placement": {
+          "attached": "バーに固定",
+          "floating": "フローティング"
+        },
+        "panel-transparency": {
+          "glass": "ガラス",
+          "soft": "ソフト",
+          "solid": "単色"
+        },
+        "password-style": {
+          "filled-circles": "塗りつぶし円",
+          "random-icons": "ランダムなアイコン"
+        },
+        "shadow-direction": {
+          "center": "中央",
+          "down": "下",
+          "down-left": "左下",
+          "down-right": "右下",
+          "left": "左",
+          "right": "右",
+          "up": "上",
+          "up-left": "左上",
+          "up-right": "右上"
+        },
+        "window-switcher-style": {
+          "carousel": "カルーセル",
+          "compact": "コンパクト"
+        }
+      },
+      "theme": {
+        "mode": {
+          "dark": "ダーク",
+          "light": "ライト"
+        },
+        "shell-mode": {
+          "follow": "追従"
+        },
+        "source": {
+          "built-in": "内蔵",
+          "community": "コミュニティ",
+          "custom": "独自設定",
+          "wallpaper": "壁紙"
+        }
+      },
+      "wallpaper": {
+        "fill": {
+          "center": "中央",
+          "crop": "トリミング",
+          "fit": "全体表示",
+          "repeat": "繰り返し",
+          "span": "複数画面にまたがって表示",
+          "stretch": "引き伸ばし"
+        },
+        "order": {
+          "alphabetical": "名前",
+          "random": "ランダム"
+        },
+        "transition": {
+          "diamond": "ダイヤモンド",
+          "disc": "ディスク",
+          "fade": "フェード",
+          "golden": "ゴールデン",
+          "honeycomb": "ハニカム",
+          "melt": "溶解",
+          "pixel": "ピクセル",
+          "stripes": "ストライプ",
+          "vortex": "渦巻き",
+          "wipe": "ワイプ",
+          "zoom": "ズーム"
+        }
+      }
+    },
+    "session-actions": {
+      "variant": {
+        "default": "既定",
+        "destructive": "危険",
+        "ghost": "ゴースト",
+        "outline": "アウトライン",
+        "primary": "主要",
+        "secondary": "補助"
+      }
+    }
+  },
+  "time": {
+    "duration": {
+      "less-than-minute": "1分未満",
+      "three-parts": "{first} {second} {third}",
+      "two-parts": "{first} {second}"
+    },
+    "file": {
+      "unknown": "不明"
+    },
+    "relative": {
+      "days-ago": "{count}日前",
+      "days-ago-plural": "{count}日前",
+      "hours-ago": "{count}時間前",
+      "hours-ago-plural": "{count}時間前",
+      "just-now": "たった今",
+      "minutes-ago": "{count}分前",
+      "minutes-ago-plural": "{count}分前"
+    },
+    "units": {
+      "day": "{count}日",
+      "day-plural": "{count}日",
+      "hour": "{count}時間",
+      "hour-plural": "{count}時間",
+      "minute": "{count}分",
+      "minute-plural": "{count}分"
+    }
+  },
+  "ui": {
+    "controls": {
+      "search-picker": {
+        "empty": "検索結果がありません",
+        "placeholder": "検索…"
+      },
+      "select": {
+        "placeholder": "オプションを選択"
+      }
+    },
+    "dialogs": {
+      "color-picker": {
+        "copy": "現在の形式でカラーコードをコピー",
+        "title": "色"
+      },
+      "file": {
+        "actions": {
+          "open": "開く",
+          "save": "保存",
+          "select-folder": "フォルダーを選択"
+        },
+        "empty-filtered": "現在の絞り込み条件に一致するファイルがありません",
+        "entry": {
+          "folder": "フォルダー"
+        },
+        "filename-placeholder": "ファイル名",
+        "filter-placeholder": "絞り込み…",
+        "sort": {
+          "ascending": "↑",
+          "date": "日付",
+          "descending": "↓",
+          "name": "名前",
+          "size": "サイズ"
+        },
+        "title": {
+          "default": "ファイルダイアログ",
+          "open": "ファイルを開く",
+          "save": "ファイルを保存",
+          "select-folder": "フォルダーを選択"
+        }
+      },
+      "glyph-picker": {
+        "all-categories": "すべて",
+        "search-placeholder": "グリフを検索…",
+        "title": "グリフを選択"
+      }
+    }
+  }
+}
