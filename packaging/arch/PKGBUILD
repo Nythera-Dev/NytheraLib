@@ -1,0 +1,22 @@
+# Build from a NytheraLib checkout: cd packaging/arch && makepkg -s
+pkgname=nythera-lib
+pkgver=$(cat ../../VERSION)
+pkgrel=1
+pkgdesc='Shared infrastructure for Nythera Shell and Files'
+arch=(x86_64 aarch64)
+url='https://github.com/Nythera-Dev/NytheraLib'
+license=(MIT Apache-2.0)
+depends=(cairo curl fontconfig freetype2 glib2 harfbuzz libgcc libglvnd libjxl
+         librsvg libstdc++ libwebp libxkbcommon md4c nlohmann-json pango
+         tomlplusplus wayland)
+makedepends=(meson ninja pkgconf stb wayland-protocols)
+provides=(libnythera_lib.so)
+
+build() {
+  arch-meson "$startdir/../.." "$srcdir/build"
+  meson compile -C "$srcdir/build"
+}
+
+package() {
+  meson install -C "$srcdir/build" --no-rebuild --destdir "$pkgdir"
+}
