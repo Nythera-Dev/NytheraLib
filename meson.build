@@ -269,6 +269,7 @@ _wlr_ls_c = custom_target('wlr-layer-shell-unstable-v1-client-source',
 )
 _protocol_sources += _wlr_ls_c
 _protocol_headers += _wlr_ls_h
+alias_target('generated-headers', _protocol_headers)
 
 
 _nythera_lib_sources = files(

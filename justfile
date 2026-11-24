@@ -1,0 +1,120 @@
+set positional-arguments
+
+mode := "debug"
+# Keep one daily/development build in the existing build-debug directory.
+debug-buildtype := "debugoptimized"
+build-dir := "build-" + mode
+prefix := env("HOME") + "/.local/opt/nythera-lib"
+libdir := "lib"
+cpp-std := "c++23"
+
+default:
+    @just --list
+
+_validate-mode m:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{m}}" in
+        debug|release|asan) ;;
+        *)
+            echo "error: invalid build mode '{{m}}' (expected: debug, release, or asan)" >&2
+            exit 1
+            ;;
+    esac
+
+configure m=mode install_prefix=prefix: (_validate-mode m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=(--buildtype={{ if m == "release" { "release" } else if m == "asan" { "debug" } else { debug-buildtype } }} -Dcpp_std={{cpp-std}} --libdir={{libdir}})
+    [[ "{{m}}" == "release" ]] && args+=(-Db_lto=true)
+    [[ "{{m}}" == "asan"    ]] && args+=(-Db_sanitize=address,undefined)
+    if [[ -d "build-{{m}}" ]]; then
+        meson setup "build-{{m}}" "${args[@]}" --prefix "{{install_prefix}}" --reconfigure
+    else
+        meson setup "build-{{m}}" "${args[@]}" --prefix "{{install_prefix}}"
+    fi
+    ln -sfn "build-{{m}}/compile_commands.json" compile_commands.json
+
+build m=mode: (_ensure-configured m)
+    meson compile -C build-{{m}}
+
+_ensure-configured m=mode: (_validate-mode m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! -f "build-{{m}}/build.ninja" ]]; then
+        just configure {{m}}
+        exit 0
+    fi
+    configure_output="$(meson configure "build-{{m}}")"
+    current_cpp_std="$(awk '$1 == "cpp_std" { print $2; found=1 } END { if (!found) exit 1 }' <<<"$configure_output")"
+    current_buildtype="$(awk '$1 == "buildtype" { print $2; found=1 } END { if (!found) exit 1 }' <<<"$configure_output")"
+    desired_buildtype="{{ if m == "release" { "release" } else if m == "asan" { "debug" } else { debug-buildtype } }}"
+    args=()
+    [[ "$current_buildtype" != "$desired_buildtype" ]] && args+=(-Dbuildtype="$desired_buildtype")
+    [[ "$current_cpp_std" != "{{cpp-std}}" ]] && args+=(-Dcpp_std={{cpp-std}})
+    if (( ${#args[@]} > 0 )); then
+        meson configure "build-{{m}}" "${args[@]}"
+    fi
+
+install m: (_validate-mode m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! -e "build-{{m}}/libnythera_lib.so" ]]; then
+        echo "error: build-{{m}}/libnythera_lib.so is missing; run 'just build {{m}}' before installing" >&2
+        exit 1
+    fi
+    meson install --no-rebuild -C build-{{m}}
+
+uninstall m: (_validate-mode m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! -f "build-{{m}}/build.ninja" ]]; then
+        echo "error: build-{{m}} is missing or was not configured with the Ninja backend; nothing to uninstall" >&2
+        exit 1
+    fi
+    ninja -C build-{{m}} uninstall
+
+_check_formatter:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="$(clang-format --version)"
+    echo "$version"
+    if [[ ! "$version" =~ version\ ([0-9]+)\. ]] || [[ "${BASH_REMATCH[1]}" -lt 22 ]]; then
+        echo "error: formatting requires clang-format 22 or newer; put its bin directory on PATH" >&2
+        exit 1
+    fi
+
+format: format-code
+
+format-check: format-code-check
+
+format-code: _check_formatter
+    find src \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format -i
+    find src \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 grep -ZlP '\s+$' | xargs -0 -r sed -i 's/[[:space:]]*$//'
+
+format-code-check: _check_formatter
+    find src \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run -Werror
+
+_clang_tidy m=mode *args: (_validate-mode m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    meson compile -C "build-{{m}}" generated-headers
+    src_root="$(realpath src)"
+    run-clang-tidy -quiet -use-color -p "build-{{m}}" -j "$(nproc)" -header-filter='\.\./src/.*' {{args}} "^${src_root}/.*"
+
+lint m=mode: (_ensure-configured m)
+    just _clang_tidy {{m}} '-warnings-as-errors=*'
+
+fix m=mode: (_ensure-configured m)
+    just _clang_tidy {{m}} -fix
+    just format-code
+
+clean m=mode: (_validate-mode m)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -L compile_commands.json && "$(readlink compile_commands.json)" == "build-{{m}}/compile_commands.json" ]]; then
+        rm -f compile_commands.json
+    fi
+    rm -rf build-{{m}}
+
+rebuild m=mode: (clean m) (build m)
