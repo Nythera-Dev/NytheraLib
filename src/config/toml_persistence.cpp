@@ -138,6 +138,9 @@ namespace nythera::config {
         }
         preserveScalarStyle(replacement, old->second);
       }
+      if (parent != &document && parent->as_table_fmt().fmt == editor::table_format::implicit) {
+        parent->as_table_fmt().fmt = editor::table_format::multiline;
+      }
       table[key] = std::move(replacement);
       return true;
     }

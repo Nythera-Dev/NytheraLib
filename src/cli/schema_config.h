@@ -14,8 +14,8 @@ namespace nythera::cli {
       "validate",
       "Check config validity",
       "With no path, validates the merged configuration the way the shell loads it:\n"
-      "  - every *.toml in the active config dir, then\n"
-      "  - the state-dir settings.toml overrides.\n\n"
+      "  - shared theme.toml, then the active shell/*.toml files and their includes.\n"
+      "  - for the legacy layout only, use the flat config and settings.toml.\n\n"
       "With a directory path, validates only that directory's *.toml files.\n"
       "With a file path, validates only that file.\n\n"
       "Reports TOML syntax errors, unknown sections/settings, and bad values\n"
@@ -48,8 +48,8 @@ namespace nythera::cli {
       "export",
       "Print the active config as TOML",
       "Prints TOML to stdout from the same config stack used by the shell:\n"
-      "  - every *.toml in the active config dir, then\n"
-      "  - the state-dir settings.toml overrides.\n\n"
+      "  - shared theme.toml, then the active shell/*.toml files and their includes.\n"
+      "  - for the legacy layout only, use the flat config and settings.toml.\n\n"
       "Modes:\n"
       "  merged  Export merged user config only (default)\n"
       "  full    Export full effective config, including built-in defaults\n\n"

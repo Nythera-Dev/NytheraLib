@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <format>
-#include <set>
+#include <map>
 #include <system_error>
 #include <utility>
 
@@ -163,16 +163,19 @@ namespace nythera::config {
       return directive;
     }
 
+    enum class Visit { Expanding, Expanded };
+    using IncludeVisits = std::map<std::filesystem::path, Visit>;
+
     // Forward declaration: parse `path`, then expand it (mutual recursion with the
     // include loop below).
     toml::table loadAndExpand(
-        const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out,
-        ConfigSourceMap* sources, const LoadInputs& inputs
+        const std::filesystem::path& path, IncludeVisits& visited, MergeResult& out, ConfigSourceMap* sources,
+        const LoadInputs& inputs
     );
 
     void mergeIncluded(
-        const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out,
-        toml::table& base, ConfigSourceMap* sources, const LoadInputs& inputs
+        const std::filesystem::path& path, IncludeVisits& visited, MergeResult& out, toml::table& base,
+        ConfigSourceMap* sources, const LoadInputs& inputs
     ) {
       ConfigSourceMap included;
       ConfigService::deepMerge(base, loadAndExpand(path, visited, out, sources ? &included : nullptr, inputs));
@@ -185,15 +188,18 @@ namespace nythera::config {
     // file's own body (minus [include]) so the host file wins. Returns the merged
     // subtree contributed by this file.
     toml::table expandFile(
-        const std::filesystem::path& path, const toml::table& parsed, std::set<std::filesystem::path>& visited,
-        MergeResult& out, ConfigSourceMap* sources, const LoadInputs& inputs
+        const std::filesystem::path& path, const toml::table& parsed, IncludeVisits& visited, MergeResult& out,
+        ConfigSourceMap* sources, const LoadInputs& inputs
     ) {
       const auto key = inputs.canonicalFile(path);
-      if (visited.contains(key)) {
-        kLog.warn("config include cycle or duplicate skipped: {}", key.string());
+      const auto [visit, firstVisit] = visited.try_emplace(key, Visit::Expanding);
+      if (!firstVisit) {
+        // A previously expanded file can also be reached by autoload or another include.
+        if (visit->second == Visit::Expanding) {
+          kLog.warn("config include cycle skipped: {}", key.string());
+        }
         return toml::table{};
       }
-      visited.insert(key);
       out.loadedFiles.push_back(key);
 
       const std::string includingDir = path.parent_path().string();
@@ -233,12 +239,13 @@ namespace nythera::config {
       toml::table body = parsed;
       body.erase("include");
       ConfigService::deepMerge(base, body);
+      visit->second = Visit::Expanded;
       return base;
     }
 
     toml::table loadAndExpand(
-        const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out,
-        ConfigSourceMap* sources, const LoadInputs& inputs
+        const std::filesystem::path& path, IncludeVisits& visited, MergeResult& out, ConfigSourceMap* sources,
+        const LoadInputs& inputs
     ) {
       inputs.watch(path);
       toml::table parsed;
@@ -255,7 +262,32 @@ namespace nythera::config {
       return expandFile(path, parsed, visited, out, sources, inputs);
     }
 
-    void mergeConfig(std::string_view configDir, MergeResult& out, ConfigSourceMap* sources, const LoadInputs& inputs) {
+    void mergeConfig(
+        std::string_view configDir, std::span<const std::filesystem::path> baseFiles, MergeResult& out,
+        ConfigSourceMap* sources, const LoadInputs& inputs
+    ) {
+      if (configDir.empty() && baseFiles.empty()) {
+        return;
+      }
+
+      IncludeVisits visited;
+      for (const auto& baseFile : baseFiles) {
+        if (baseFile.empty()) {
+          continue;
+        }
+        inputs.watch(baseFile);
+        std::error_code ec;
+        if ((std::filesystem::is_regular_file(baseFile, ec) && !ec) || inputs.replacement(baseFile) != nullptr) {
+          ConfigSourceMap baseSources;
+          ConfigService::deepMerge(
+              out.merged, loadAndExpand(baseFile, visited, out, sources ? &baseSources : nullptr, inputs)
+          );
+          if (sources) {
+            sources->overlay(baseSources);
+          }
+        }
+      }
+
       if (configDir.empty()) {
         return;
       }
@@ -289,7 +321,6 @@ namespace nythera::config {
 
       // Phase B — merge the load set. When any root opts out, only the opting-out
       // roots (and their recursive includes) are loaded; other roots are skipped.
-      std::set<std::filesystem::path> visited;
       for (const auto& root : roots) {
         if (anyOptOut && !root.optOut) {
           continue;
@@ -306,19 +337,28 @@ namespace nythera::config {
 
   } // namespace
 
-  MergeResult mergeConfigWithIncludes(std::string_view configDir) {
+  MergeResult mergeConfigWithIncludes(std::string_view configDir) { return mergeConfigWithIncludes(configDir, {}); }
+
+  MergeResult mergeConfigWithIncludes(std::string_view configDir, std::span<const std::filesystem::path> baseFiles) {
     MergeResult result;
-    mergeConfig(configDir, result, nullptr, {});
+    mergeConfig(configDir, baseFiles, result, nullptr, {});
     return result;
   }
 
   SourcedMergeResult mergeConfigWithSources(std::string_view configDir) {
-    return mergeConfigWithSources(configDir, {});
+    return mergeConfigWithSources(configDir, {}, {});
   }
 
   SourcedMergeResult mergeConfigWithSources(std::string_view configDir, std::span<const StagedTomlFile> staged) {
+    return mergeConfigWithSources(configDir, staged, {});
+  }
+
+  SourcedMergeResult mergeConfigWithSources(
+      std::string_view configDir, std::span<const StagedTomlFile> staged,
+      std::span<const std::filesystem::path> baseFiles
+  ) {
     SourcedMergeResult result;
-    mergeConfig(configDir, result.config, &result.sources, {staged, &result.watchPaths});
+    mergeConfig(configDir, baseFiles, result.config, &result.sources, {staged, &result.watchPaths});
     return result;
   }
 

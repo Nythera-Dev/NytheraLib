@@ -137,6 +137,9 @@ namespace nythera::cli {
       Positional{"action", "timer-start, timer-cancel, alarm-arm, alarm-dismiss, alarm-snooze", {}, true, false, false},
       Positional{"value", "Seconds for timer-start or local HH:MM for alarm-arm", {}, false, false, false},
   };
+  inline constexpr std::array kMsgConfigMonitorStatusPositionals{
+      Positional{"app-id", "Application whose configuration is monitored", {}, true, false, false},
+  };
   inline constexpr std::array kMsgConfigSetPositionals{
       Positional{"path", "Dotted config path (e.g. theme.shell_mode)", {}, true, false, false},
       Positional{"value", "TOML value; quote strings (e.g. \"'light'\")", {}, true, false, false},
@@ -379,7 +382,14 @@ namespace nythera::cli {
         false
     };
     inline constexpr Command barShow{"bar-show", "Show one or all bars", {}, {}, {}, kMsgBarShowPositionals, {}, false};
-    inline constexpr Command islandActivity{"island-activity", "Control the shared session timer/alarm", {}, {}, {}, kMsgIslandActivityPositionals, {}, false};
+    inline constexpr Command islandActivity{"island-activity",
+                                            "Control the shared session timer/alarm",
+                                            {},
+                                            {},
+                                            {},
+                                            kMsgIslandActivityPositionals,
+                                            {},
+                                            false};
     inline constexpr Command barIslandToggle{
         "bar-island-toggle", "Expand or collapse Dynamic Island", {}, {}, {}, kMsgBarTogglePositionals, {}, false
     };
@@ -477,6 +487,16 @@ namespace nythera::cli {
     };
     inline constexpr Command configGet{"config-get", "Get a config value",     {}, {},
                                        {},           kMsgConfigGetPositionals, {}, false};
+    inline constexpr Command configMonitorStatus{
+        "config-monitor-status",
+        "Report whether the shell monitors an application's configuration",
+        {},
+        {},
+        {},
+        kMsgConfigMonitorStatusPositionals,
+        {},
+        true
+    };
     inline constexpr Command configSet{"config-set", "Set a config value",     {}, {},
                                        {},           kMsgConfigSetPositionals, {}, false};
     inline constexpr Command configReload{"config-reload", "Reload the config file", {}, {}, {}, {}, {}, false};
@@ -968,6 +988,7 @@ namespace nythera::cli {
       msg::colorSchemeGet,
       msg::colorSchemeSet,
       msg::configGet,
+      msg::configMonitorStatus,
       msg::configSet,
       msg::configReload,
       msg::desktopWidgetsEdit,

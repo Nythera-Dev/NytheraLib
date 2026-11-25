@@ -11,6 +11,11 @@ namespace FileUtils {
     return base.empty() ? base : base + (application == Application::Shell ? "/shell" : "/files");
   }
 
+  [[nodiscard]] inline std::string sharedThemeConfigPath() {
+    const std::string base = configDir();
+    return base.empty() ? base : base + "/theme.toml";
+  }
+
   [[nodiscard]] inline std::string applicationStateDir(Application application) {
     const std::string base = stateDir();
     return base.empty() ? base : base + (application == Application::Shell ? "/shell" : "/files");

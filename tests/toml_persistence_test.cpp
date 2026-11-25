@@ -76,6 +76,25 @@ nested = { original = true }
     checkSuccess(persistTomlEdits(edits));
     TEST_CHECK(read(target) == content);
 
+    // Adding a scalar or inline array of tables under an implicit parent table promotes it
+    // cleanly while preserving comments.
+    const auto implicitParent = env.config() / "implicit-parent.toml";
+    write(implicitParent, "# Wallpaper header\n[wallpaper.default]\npath = '/a.png'\n");
+    checkSuccess(persistTomlEdits(
+        std::array{TomlFileEdits{
+            implicitParent,
+            {{{"wallpaper", "favorite"}, R"([ { path = "/b.png", theme_mode = "light" } ])"},
+             {{"wallpaper", "shuffle"}, "true"}},
+        }}
+    ));
+    const auto implicitContent = read(implicitParent);
+    TEST_CHECK(implicitContent.contains("# Wallpaper header"));
+    const auto implicitParsed = toml::parse(implicitContent);
+    TEST_CHECK(implicitParsed["wallpaper"]["default"]["path"].value<std::string>() == "/a.png");
+    TEST_CHECK(implicitParsed["wallpaper"]["shuffle"].value<bool>() == true);
+    TEST_CHECK(implicitParsed["wallpaper"]["favorite"][0]["path"].value<std::string>() == "/b.png");
+    TEST_CHECK(implicitParsed["wallpaper"]["favorite"][0]["theme_mode"].value<std::string>() == "light");
+
     const auto dangling = env.config() / "user-theme.toml";
     fs::create_symlink("../work/new-theme.toml", dangling);
     checkSuccess(persistTomlEdits(std::array{TomlFileEdits{dangling, {{{"theme", "mode"}, "'dark'"}}}}));

@@ -61,6 +61,16 @@ void StateStore::load() {
   }
 
   secureStateFile(m_path);
+  loadReadOnly();
+}
+
+void StateStore::loadReadOnly() {
+  m_state = toml::table{};
+  m_parseError.clear();
+
+  if (m_path.empty() || !std::filesystem::exists(m_path)) {
+    return;
+  }
 
   kLog.info("loading {}", m_path.string());
   try {
@@ -128,6 +138,45 @@ std::optional<std::string> StateStore::stringValue(std::string_view owner, std::
 
   kLog.warn("state value {}.{} is not a string", owner, key);
   return std::nullopt;
+}
+
+std::unordered_map<std::string, std::string>
+StateStore::stringMap(std::string_view owner, std::string_view subtable) const {
+  if (!validStateIdentifier(owner) || !validStateIdentifier(subtable)) {
+    kLog.warn("invalid state map {}.{}", owner, subtable);
+    return {};
+  }
+
+  const auto* ownerTbl = m_state[owner].as_table();
+  if (ownerTbl == nullptr) {
+    if (m_state.contains(owner)) {
+      kLog.warn("state owner {} is not a table", owner);
+    }
+    return {};
+  }
+
+  const auto* node = ownerTbl->get(subtable);
+  if (node == nullptr) {
+    return {};
+  }
+  const auto* sub = node->as_table();
+  if (sub == nullptr) {
+    kLog.warn("state map {}.{} is not a table", owner, subtable);
+    return {};
+  }
+
+  std::unordered_map<std::string, std::string> result;
+  for (const auto& [k, v] : *sub) {
+    if (k.str().empty()) {
+      continue;
+    }
+    if (auto str = v.value<std::string>()) {
+      result.emplace(std::string(k.str()), std::move(*str));
+    } else {
+      kLog.warn("state map {}.{}.{} is not a string", owner, subtable, k.str());
+    }
+  }
+  return result;
 }
 
 bool StateStore::ownerValid(std::string_view owner) const {
@@ -233,6 +282,76 @@ bool StateStore::setString(std::string_view owner, std::string_view key, std::st
   }
 
   table->insert_or_assign(key, std::string(value));
+  if (!write()) {
+    m_state = std::move(previous);
+    kLog.warn("failed to write {}", m_path.string());
+    return false;
+  }
+
+  m_parseError.clear();
+  return true;
+}
+
+bool StateStore::setValues(
+    std::string_view owner, std::span<const std::pair<std::string_view, std::string_view>> stringEntries,
+    std::string_view mapSubtable, std::span<const std::pair<std::string_view, std::string_view>> mapEntries
+) {
+  if (m_path.empty() || !validStateIdentifier(owner)) {
+    return false;
+  }
+  for (const auto& [key, _] : stringEntries) {
+    if (!validStateIdentifier(key)) {
+      kLog.warn("invalid state key {}.{}", owner, key);
+      return false;
+    }
+  }
+  if (!mapSubtable.empty() || !mapEntries.empty()) {
+    if (!validStateIdentifier(mapSubtable)) {
+      kLog.warn("invalid state map {}.{}", owner, mapSubtable);
+      return false;
+    }
+    for (const auto& [key, _] : mapEntries) {
+      if (key.empty()) {
+        kLog.warn("empty state map key in {}.{}", owner, mapSubtable);
+        return false;
+      }
+    }
+  }
+  if (stringEntries.empty() && mapEntries.empty()) {
+    return true;
+  }
+
+  auto previous = m_state;
+  auto* table = ensureTable(m_state, owner);
+  if (table == nullptr) {
+    return false;
+  }
+
+  bool dirty = false;
+  for (const auto& [key, value] : stringEntries) {
+    if (const auto existing = (*table)[key].value<std::string>(); !existing.has_value() || *existing != value) {
+      table->insert_or_assign(key, std::string(value));
+      dirty = true;
+    }
+  }
+  if (!mapEntries.empty()) {
+    auto* sub = ensureTable(*table, mapSubtable);
+    if (sub == nullptr) {
+      m_state = std::move(previous);
+      return false;
+    }
+    for (const auto& [key, value] : mapEntries) {
+      if (const auto existing = (*sub)[key].value<std::string>(); !existing.has_value() || *existing != value) {
+        sub->insert_or_assign(key, std::string(value));
+        dirty = true;
+      }
+    }
+  }
+
+  if (!dirty) {
+    return true;
+  }
+
   if (!write()) {
     m_state = std::move(previous);
     kLog.warn("failed to write {}", m_path.string());

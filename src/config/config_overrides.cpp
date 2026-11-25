@@ -1,3 +1,4 @@
+#include "config/application_paths.h"
 #include "config/atomic_file.h"
 #include "config/config_merge.h"
 #include "config/config_service.h"
@@ -13,8 +14,10 @@
 #include "util/string_utils.h"
 
 #include <algorithm>
+#include <cmath>
 #include <exception>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iterator>
 #include <optional>
@@ -664,34 +667,179 @@ ConfigChangeSet computeConfigChangeSet(const Config& prev, const Config& next) {
   };
 }
 
-bool ConfigService::isOverrideOnlyMonitorOverride(std::string_view barName, std::string_view match) const {
-  if (barName.empty() || match.empty() || !hasOverride({"bar", std::string(barName), "monitor", std::string(match)})) {
-    return false;
+namespace {
+
+  std::string formatTomlString(std::string_view text) {
+    std::string out;
+    out.reserve(text.size() + 2);
+    out.push_back('"');
+    for (const char ch : text) {
+      const auto uch = static_cast<unsigned char>(ch);
+      switch (ch) {
+      case '\\':
+        out += "\\\\";
+        break;
+      case '"':
+        out += "\\\"";
+        break;
+      case '\b':
+        out += "\\b";
+        break;
+      case '\t':
+        out += "\\t";
+        break;
+      case '\n':
+        out += "\\n";
+        break;
+      case '\f':
+        out += "\\f";
+        break;
+      case '\r':
+        out += "\\r";
+        break;
+      default:
+        if (uch < 0x20U || uch == 0x7fU) {
+          out += std::format("\\u{:04X}", static_cast<unsigned int>(uch));
+        } else {
+          out.push_back(ch);
+        }
+        break;
+      }
+    }
+    out.push_back('"');
+    return out;
   }
 
-  const auto barIt = m_configFileMonitorOverrideNames.find(std::string(barName));
-  if (barIt == m_configFileMonitorOverrideNames.end()) {
-    return true;
+  std::string formatTomlKey(std::string_view key) {
+    const bool bare = !key.empty() && std::ranges::all_of(key, [](unsigned char c) {
+      return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
+    });
+    return bare ? std::string(key) : formatTomlString(key);
   }
-  return !barIt->second.contains(std::string(match));
+
+} // namespace
+
+std::string ConfigService::formatTomlValue(const toml::node& node) {
+  if (const auto* b = node.as_boolean()) {
+    return b->get() ? "true" : "false";
+  }
+  if (const auto* i = node.as_integer()) {
+    return std::to_string(i->get());
+  }
+  if (const auto* f = node.as_floating_point()) {
+    const double v = f->get();
+    if (std::isnan(v)) {
+      return "nan";
+    }
+    if (std::isinf(v)) {
+      return std::signbit(v) ? "-inf" : "inf";
+    }
+    std::string out = std::format("{:.17g}", v);
+    if (out.find('.') == std::string::npos
+        && out.find('e') == std::string::npos
+        && out.find('E') == std::string::npos) {
+      out += ".0";
+    }
+    return out;
+  }
+  if (const auto* s = node.as_string()) {
+    return formatTomlString(s->get());
+  }
+  if (const auto* arr = node.as_array()) {
+    if (arr->empty()) {
+      return "[]";
+    }
+    std::string out = "[";
+    bool first = true;
+    for (const auto& elem : *arr) {
+      out += first ? " " : ", ";
+      first = false;
+      out += formatTomlValue(elem);
+    }
+    out += " ]";
+    return out;
+  }
+  if (const auto* tbl = node.as_table()) {
+    if (tbl->empty()) {
+      return "{}";
+    }
+    std::string out = "{";
+    bool first = true;
+    for (const auto& [k, v] : *tbl) {
+      out += first ? " " : ", ";
+      first = false;
+      out += formatTomlKey(k.str());
+      out += " = ";
+      out += formatTomlValue(v);
+    }
+    out += " }";
+    return out;
+  }
+  std::ostringstream oss;
+  oss << toml::toml_formatter{node};
+  return oss.str();
+}
+
+std::filesystem::path ConfigService::defaultDestinationForPath(const nythera::config::ConfigKeyPath& path) const {
+  if (!path.empty() && path.front() == "theme") {
+    if (!m_sharedThemePath.empty()) {
+      return std::filesystem::path(m_sharedThemePath);
+    }
+    if (const std::string shared = FileUtils::sharedThemeConfigPath(); !shared.empty()) {
+      return std::filesystem::path(shared);
+    }
+    return std::filesystem::path(m_configDir) / "theme.toml";
+  }
+  return std::filesystem::path(m_configDir) / "config.toml";
+}
+
+std::size_t ConfigService::preserveDepthForPath(const std::vector<std::string>& path, const toml::table& userTable) {
+  if (path.size() > 4 && path[0] == "bar" && path[2] == "monitor") {
+    const auto* mon = findOverrideNode(userTable, {"bar", path[1], "monitor", path[3]});
+    if (mon != nullptr && mon->is_table()) {
+      return 4;
+    }
+  }
+  if (path.size() > 4
+      && path[0] == "wallpaper"
+      && (path[2] == "monitors" || path[2] == "monitor")
+      && !path[3].empty()) {
+    return 4;
+  }
+  if (path.size() > 2 && path[0] == "bar") {
+    const auto* bar = findOverrideNode(userTable, {"bar", path[1]});
+    if (bar != nullptr && bar->is_table()) {
+      return 2;
+    }
+  }
+  return 0;
+}
+
+bool ConfigService::isOverrideOnlyMonitorOverride(std::string_view barName, std::string_view match) const {
+  if (barName.empty() || match.empty()) {
+    return false;
+  }
+  const auto* node = findOverrideNode(m_mergedUserTable, {"bar", std::string(barName), "monitor", std::string(match)});
+  return node != nullptr && node->is_table();
 }
 
 bool ConfigService::isOverrideOnlyBar(std::string_view name) const {
-  if (name.empty() || !hasOverride({"bar", std::string(name)})) {
+  if (name.empty()) {
     return false;
   }
-  return !m_configFileBarNames.contains(std::string(name));
+  const auto* node = findOverrideNode(m_mergedUserTable, {"bar", std::string(name)});
+  return node != nullptr && node->is_table();
 }
 
 bool ConfigService::hasOverride(const std::vector<std::string>& path) const {
   if (path.empty()) {
     return false;
   }
-  return findOverrideNode(m_overridesTable, path) != nullptr;
+  return findOverrideNode(m_mergedUserTable, path) != nullptr;
 }
 
 bool ConfigService::hasEffectiveOverride(const std::vector<std::string>& path) const {
-  if (path.empty() || findOverrideNode(m_overridesTable, path) == nullptr) {
+  if (path.empty() || findOverrideNode(m_mergedUserTable, path) == nullptr) {
     return false;
   }
 
@@ -700,7 +848,7 @@ bool ConfigService::hasEffectiveOverride(const std::vector<std::string>& path) c
     return it->second;
   }
 
-  const bool effective = overridePathEffectiveInTable(path, m_overridesTable, &m_config);
+  const bool effective = pathEffectiveInUserTable(path, m_mergedUserTable, &m_config);
   m_effectiveOverrideCache[key] = effective;
   return effective;
 }
@@ -713,10 +861,8 @@ bool ConfigService::hasEffectiveBarLaneOverride(const std::vector<std::string>& 
     return true;
   }
 
-  // The lane list itself matches the config file, but a group token in it can still carry the
-  // change: moving a widget into a lane's capsule group only edits the scope's capsule_group array.
   const std::vector<std::string> groupPath = capsuleGroupPathForBarLanePath(lanePath);
-  if (findOverrideNode(m_overridesTable, groupPath) == nullptr) {
+  if (findOverrideNode(m_mergedUserTable, groupPath) == nullptr) {
     return false;
   }
 
@@ -725,103 +871,50 @@ bool ConfigService::hasEffectiveBarLaneOverride(const std::vector<std::string>& 
     return it->second;
   }
 
-  toml::table without = m_overridesTable;
-  eraseOverridePath(without, lanePath, overridePreserveDepthForPath(lanePath));
-  eraseOverridePath(without, groupPath, overridePreserveDepthForPath(groupPath));
-  const auto baseline = configForOverrides(without);
+  toml::table without = m_mergedUserTable;
+  eraseOverridePath(without, lanePath, preserveDepthForPath(lanePath, without));
+  eraseOverridePath(without, groupPath, preserveDepthForPath(groupPath, without));
+  without.erase(nythera::config::kConfigVersionKey);
+  nythera::config::LegacyConfigIssues ignoredIssues;
+  nythera::config::normalizeLegacyConfig(without, ignoredIssues);
+  const auto baseline = parseMergedConfig(without);
   const bool effective = !baseline.has_value() || !barLaneContentEqual(m_config, *baseline, lanePath);
   m_effectiveOverrideCache[key] = effective;
   return effective;
 }
 
-std::size_t ConfigService::overridePreserveDepthForPath(const std::vector<std::string>& path) const {
-  if (path.size() > 4 && path[0] == "bar" && path[2] == "monitor" && isOverrideOnlyMonitorOverride(path[1], path[3])) {
-    return 4;
+std::optional<Config>
+ConfigService::parseMergedConfig(const toml::table& normalized, const toml::table* legacySidecar) const {
+  (void)legacySidecar;
+  if (normalized.empty()) {
+    return makeDefaultConfig();
   }
-  if (path.size() > 4 && path[0] == "wallpaper" && path[2] == "monitor" && !path[3].empty()) {
-    return 4;
-  }
-  if (path.size() > 2 && path[0] == "bar" && isOverrideOnlyBar(path[1])) {
-    return 2;
-  }
-  return 0;
-}
 
-std::optional<Config> ConfigService::configForOverrides(const toml::table& overrides) const {
   Config parsed;
   nythera::config::seedBuiltinWidgets(parsed);
-
-  auto mergeResult = nythera::config::mergeConfigWithIncludes(m_configDir);
-  toml::table merged = std::move(mergeResult.merged);
-  if (!mergeResult.firstError.empty()) {
-    kLog.warn(
-        "skipping config error in effective override comparison: {}",
-        mergeResult.firstErrorOrigin.prefixed(mergeResult.firstError)
-    );
-  }
-
-  toml::table effectiveOverrides = overrides;
-  nythera::config::schema::Diagnostics migrationDiag;
-  if (!effectiveOverrides.empty()) {
-    const auto storedVersion = nythera::config::storedConfigVersion(effectiveOverrides, migrationDiag);
-    if (storedVersion.has_value()) {
-      (void)nythera::config::applyPendingConfigMigrations(effectiveOverrides, merged, *storedVersion, migrationDiag);
-    }
-  }
-  if (migrationDiag.hasErrors()) {
-    kLog.warn("effective override comparison rejected invalid config_version");
-    return std::nullopt;
-  }
-  deepMerge(merged, effectiveOverrides);
-  merged.erase(nythera::config::kConfigVersionKey);
-  nythera::config::LegacyConfigIssues issues;
-  nythera::config::normalizeLegacyConfig(merged, issues, &effectiveOverrides);
-  if (mergeResult.loadedFiles.empty() && overrides.empty()) {
-    parsed.idle.behaviors = defaultIdleBehaviors();
-    parsed.bars.push_back(BarConfig{});
-    parsed.controlCenter.shortcuts = defaultControlCenterShortcuts();
-    parsed.shell.session.actions = defaultSessionPanelActions();
-    return parsed;
-  }
-
   try {
-    parseConfigTable(merged, parsed, false, false);
+    parseConfigTable(normalized, parsed, false, false);
   } catch (const std::exception& e) {
-    kLog.warn("effective override comparison parse failed: {}", e.what());
+    kLog.warn("config candidate parse failed: {}", e.what());
     return std::nullopt;
   }
   return parsed;
 }
 
-nythera::config::schema::Diagnostics ConfigService::diagnosticsForOverrides(const toml::table& overrides) const {
-  auto mergeResult = nythera::config::mergeConfigWithIncludes(m_configDir);
-  toml::table merged = std::move(mergeResult.merged);
-  nythera::config::ConfigOriginIndex origins = std::move(mergeResult.origins);
+nythera::config::schema::Diagnostics ConfigService::diagnosticsForTable(
+    const toml::table& merged, const nythera::config::ConfigOriginIndex& origins, const toml::table* legacySidecar
+) const {
   nythera::config::schema::Diagnostics diagnostics;
-  if (!mergeResult.firstError.empty()) {
-    diagnostics.fatalAt(std::move(mergeResult.firstErrorOrigin), "syntax", mergeResult.firstError, "config.syntax");
-  }
-
-  toml::table effectiveOverrides = overrides;
-  if (!m_overridesPath.empty()) {
-    origins.record(std::filesystem::path(m_overridesPath), overrides);
-  }
-  if (!effectiveOverrides.empty()) {
-    const auto storedVersion = nythera::config::storedConfigVersion(effectiveOverrides, diagnostics);
-    if (storedVersion.has_value()) {
-      (void)nythera::config::applyPendingConfigMigrations(effectiveOverrides, merged, *storedVersion, diagnostics);
-    }
-  }
-  deepMerge(merged, effectiveOverrides);
-  merged.erase(nythera::config::kConfigVersionKey);
+  toml::table normalized = merged;
+  normalized.erase(nythera::config::kConfigVersionKey);
   nythera::config::LegacyConfigIssues issues;
-  nythera::config::normalizeLegacyConfig(merged, issues, &effectiveOverrides);
+  nythera::config::normalizeLegacyConfig(normalized, issues, legacySidecar);
   for (const auto& issue : issues) {
     diagnostics.warn(issue.path, issue.message, "config.legacy");
   }
   origins.annotate(diagnostics);
 
-  auto semantic = m_validator ? m_validator(merged, origins) : nythera::config::schema::Diagnostics{};
+  auto semantic = m_validator ? m_validator(normalized, origins) : nythera::config::schema::Diagnostics{};
   diagnostics.entries.insert(
       diagnostics.entries.end(), std::make_move_iterator(semantic.entries.begin()),
       std::make_move_iterator(semantic.entries.end())
@@ -829,74 +922,299 @@ nythera::config::schema::Diagnostics ConfigService::diagnosticsForOverrides(cons
   return diagnostics;
 }
 
-bool ConfigService::validateOverrideMutation(const toml::table& candidateOverrides, const OverrideDiagnostics& known) {
-  using nythera::config::schema::Diagnostics;
-  m_lastMutationError.clear();
-  if (!m_overridesParseError.empty()) {
-    m_lastMutationError = m_overridesParseError.flatten(m_configDir);
-    return false;
-  }
-
-  try {
-    std::optional<Diagnostics> computedCandidate;
-    if (known.candidate == nullptr) {
-      computedCandidate = diagnosticsForOverrides(candidateOverrides);
-    }
-    const Diagnostics& candidate = known.candidate != nullptr ? *known.candidate : *computedCandidate;
-    const auto fatal = std::ranges::find_if(candidate.entries, [](const auto& entry) {
-      return entry.severity == Diagnostics::Severity::Error
-          && entry.recoveryScope == Diagnostics::RecoveryScope::Document;
-    });
-    if (fatal != candidate.entries.end()) {
-      m_lastMutationError = fatal->describeShort(m_configDir);
-      return false;
-    }
-    std::optional<Diagnostics> computedBaseline;
-    if (known.baseline == nullptr) {
-      computedBaseline = diagnosticsForOverrides(m_persistedOverridesTable);
-    }
-    const Diagnostics& baseline = known.baseline != nullptr ? *known.baseline : *computedBaseline;
-    const auto introduced = candidate.introducedErrorsComparedTo(baseline);
-    if (!introduced.entries.empty()) {
-      const auto& entry = introduced.entries.front();
-      m_lastMutationError = entry.describeShort(m_configDir);
-      return false;
-    }
-  } catch (const std::exception& e) {
-    m_lastMutationError = e.what();
-    return false;
-  }
-  return true;
-}
-
-bool ConfigService::overridePathEffectiveInTable(
-    const std::vector<std::string>& path, const toml::table& overrides, const Config* parsedWith
+bool ConfigService::pathEffectiveInUserTable(
+    const std::vector<std::string>& path, const toml::table& userTable, const Config* parsedWith
 ) const {
-  if (path.empty() || findOverrideNode(overrides, path) == nullptr) {
+  if (path.empty() || findOverrideNode(userTable, path) == nullptr) {
     return false;
   }
 
-  std::optional<Config> ownedWithOverride;
+  std::optional<Config> ownedWithPath;
   if (parsedWith == nullptr) {
-    ownedWithOverride = configForOverrides(overrides);
-    if (!ownedWithOverride.has_value()) {
+    toml::table withNormalized = userTable;
+    withNormalized.erase(nythera::config::kConfigVersionKey);
+    nythera::config::LegacyConfigIssues ignoredIssues;
+    nythera::config::normalizeLegacyConfig(withNormalized, ignoredIssues);
+    ownedWithPath = parseMergedConfig(withNormalized);
+    if (!ownedWithPath.has_value()) {
       return true;
     }
-    parsedWith = &*ownedWithOverride;
+    parsedWith = &*ownedWithPath;
   }
 
-  toml::table withoutTable = overrides;
-  eraseOverridePath(withoutTable, path, overridePreserveDepthForPath(path));
-  auto withoutOverride = configForOverrides(withoutTable);
-  if (!withoutOverride.has_value()) {
+  toml::table withoutTable = userTable;
+  eraseOverridePath(withoutTable, path, preserveDepthForPath(path, withoutTable));
+  withoutTable.erase(nythera::config::kConfigVersionKey);
+  nythera::config::LegacyConfigIssues ignoredIssues;
+  nythera::config::normalizeLegacyConfig(withoutTable, ignoredIssues);
+  const auto withoutPath = parseMergedConfig(withoutTable);
+  if (!withoutPath.has_value()) {
     return true;
   }
 
   if ((isWidgetSettingOverridePath(path) || isPluginSettingOverridePath(path)) && m_effectivenessChecker) {
-    return m_effectivenessChecker(path, *parsedWith, *withoutOverride);
+    return m_effectivenessChecker(path, *parsedWith, *withoutPath);
   }
 
-  return !configEqual(*parsedWith, *withoutOverride);
+  return !configEqual(*parsedWith, *withoutPath);
+}
+
+bool ConfigService::persistDirectEdits(
+    std::span<const DirectEdit> edits, bool* changed, bool rejectWarnings, bool reloadOnSuccess
+) {
+  using nythera::config::ConfigDefinitionKind;
+  using nythera::config::ConfigKeyPath;
+  using nythera::config::SourcedMergeResult;
+  using nythera::config::StagedTomlFile;
+  using nythera::config::TomlFileEdits;
+  using nythera::config::schema::Diagnostics;
+
+  if (changed != nullptr) {
+    *changed = false;
+  }
+  m_lastMutationError.clear();
+
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
+    return false;
+  }
+  if (edits.empty()) {
+    return true;
+  }
+
+  std::vector<std::filesystem::path> baseFiles;
+  if (!m_sharedThemePath.empty()) {
+    baseFiles.emplace_back(m_sharedThemePath);
+  }
+
+  auto current = nythera::config::mergeConfigWithSources(m_configDir, {}, baseFiles);
+  if (!current.config.firstError.empty()) {
+    m_lastMutationError = current.config.firstErrorOrigin.prefixedShort(m_configDir, current.config.firstError);
+    return false;
+  }
+
+  toml::table baselineMerged = current.config.merged;
+  nythera::config::ConfigOriginIndex baselineOrigins = current.config.origins;
+  toml::table baselineSidecar;
+  bool hasBaselineSidecar = false;
+  ConfigProblem legacyError;
+  if (!overlayLegacySidecar(baselineMerged, baselineOrigins, baselineSidecar, hasBaselineSidecar, &legacyError)) {
+    m_lastMutationError = legacyError.flatten(m_configDir);
+    return false;
+  }
+  const auto baselineDiag =
+      diagnosticsForTable(baselineMerged, baselineOrigins, hasBaselineSidecar ? &baselineSidecar : nullptr);
+
+  std::vector<TomlFileEdits> files;
+  const auto appendFileEdit = [&](const std::filesystem::path& file, const ConfigKeyPath& path,
+                                  const std::optional<std::string>& value) {
+    const auto found = std::ranges::find(files, file, &TomlFileEdits::path);
+    if (found == files.end()) {
+      files.push_back({file, {{path, value}}});
+    } else {
+      found->edits.push_back({path, value});
+    }
+  };
+
+  for (const auto& edit : edits) {
+    if (edit.path.empty()) {
+      m_lastMutationError = "invalid empty setting path";
+      return false;
+    }
+    if (!edit.value.has_value()) {
+      if (edit.destination.has_value()) {
+        appendFileEdit(*edit.destination, edit.path, std::nullopt);
+        continue;
+      }
+      std::set<std::filesystem::path> seen;
+      for (const auto& def : current.sources.definitions(edit.path)) {
+        const std::filesystem::path targetPath(def.origin.file);
+        if (seen.insert(targetPath).second) {
+          appendFileEdit(targetPath, edit.path, std::nullopt);
+        }
+      }
+      continue;
+    }
+
+    const auto isUnderDir = [](const std::filesystem::path& file, const std::filesystem::path& dir) {
+      if (file.empty() || dir.empty()) {
+        return false;
+      }
+      std::error_code ec;
+      auto canonDir = std::filesystem::weakly_canonical(dir, ec);
+      if (ec) {
+        canonDir = dir.lexically_normal();
+      }
+      auto canonParent = std::filesystem::weakly_canonical(file.parent_path(), ec);
+      const auto normFile = ec ? file.lexically_normal() : (canonParent / file.filename()).lexically_normal();
+      const auto rel = normFile.lexically_relative(canonDir);
+      return !rel.empty() && !rel.is_absolute() && *rel.begin() != "..";
+    };
+
+    std::filesystem::path destination;
+    if (edit.destination.has_value()) {
+      destination = *edit.destination;
+    } else if (const auto* winner = current.sources.winner(edit.path)) {
+      destination = winner->origin.file;
+    } else {
+      ConfigKeyPath parent(edit.path.begin(), edit.path.end() - 1);
+      for (; !parent.empty(); parent.pop_back()) {
+        const auto* source = current.sources.winner(parent);
+        if (source != nullptr && source->kind == ConfigDefinitionKind::Table) {
+          if (!m_sharedThemePath.empty()
+              && parent.size() == 1
+              && parent.front() == "theme"
+              && isUnderDir(source->origin.file, m_configDir)) {
+            continue;
+          }
+          destination = source->origin.file;
+          break;
+        }
+      }
+      if (destination.empty()) {
+        destination = defaultDestinationForPath(edit.path);
+      }
+    }
+    appendFileEdit(destination, edit.path, edit.value);
+  }
+
+  if (files.empty()) {
+    for (const auto& edit : edits) {
+      if (!edit.value.has_value() && findOverrideNode(baselineMerged, edit.path) != nullptr) {
+        m_lastMutationError = std::format("cannot remove '{}' from read-only legacy settings.toml", edit.path.back());
+        return false;
+      }
+    }
+    return true;
+  }
+
+  std::optional<SourcedMergeResult> candidate;
+  std::map<std::filesystem::path, std::string> expectedWrites;
+  const auto result = nythera::config::persistTomlEdits(
+      files, [&](std::span<const StagedTomlFile> staged) -> std::optional<std::string> {
+        candidate = nythera::config::mergeConfigWithSources(m_configDir, staged, baseFiles);
+        if (!candidate->config.firstError.empty()) {
+          return candidate->config.firstErrorOrigin.prefixedShort(m_configDir, candidate->config.firstError);
+        }
+
+        toml::table candidateMerged = candidate->config.merged;
+        nythera::config::ConfigOriginIndex candidateOrigins = candidate->config.origins;
+        toml::table candidateSidecar;
+        bool hasCandidateSidecar = false;
+        ConfigProblem candidateLegacyError;
+        if (!overlayLegacySidecar(
+                candidateMerged, candidateOrigins, candidateSidecar, hasCandidateSidecar, &candidateLegacyError
+            )) {
+          return candidateLegacyError.flatten(m_configDir);
+        }
+
+        const auto candidateDiag =
+            diagnosticsForTable(candidateMerged, candidateOrigins, hasCandidateSidecar ? &candidateSidecar : nullptr);
+        const auto fatal = std::ranges::find_if(candidateDiag.entries, [](const auto& entry) {
+          return entry.severity == Diagnostics::Severity::Error
+              && entry.recoveryScope == Diagnostics::RecoveryScope::Document;
+        });
+        if (fatal != candidateDiag.entries.end()) {
+          return fatal->describeShort(m_configDir);
+        }
+
+        const auto introduced = rejectWarnings ? candidateDiag.introducedDiagnosticsComparedTo(baselineDiag)
+                                               : candidateDiag.introducedErrorsComparedTo(baselineDiag);
+        if (!introduced.entries.empty()) {
+          if (rejectWarnings) {
+            std::string combined;
+            for (const auto& entry : introduced.entries) {
+              if (!combined.empty()) {
+                combined += "; ";
+              }
+              combined += entry.describe();
+            }
+            return combined;
+          }
+          return introduced.entries.front().describeShort(m_configDir);
+        }
+
+        toml::table normalizedCandidate = candidateMerged;
+        normalizedCandidate.erase(nythera::config::kConfigVersionKey);
+        nythera::config::LegacyConfigIssues candidateIssues;
+        nythera::config::normalizeLegacyConfig(
+            normalizedCandidate, candidateIssues, hasCandidateSidecar ? &candidateSidecar : nullptr
+        );
+        if (!parseMergedConfig(normalizedCandidate, hasCandidateSidecar ? &candidateSidecar : nullptr).has_value()) {
+          return std::string("failed to parse candidate configuration");
+        }
+
+        std::map<ConfigKeyPath, std::optional<std::string>> finalEdits;
+        for (const auto& edit : edits) {
+          finalEdits.insert_or_assign(edit.path, edit.value);
+        }
+        for (const auto& [path, expectedExpr] : finalEdits) {
+          const toml::node* actual = findOverrideNode(candidateMerged, path);
+          if (!expectedExpr.has_value()) {
+            if (actual != nullptr) {
+              return std::format("clearing '{}' did not remove it from the merged configuration", path.back());
+            }
+            continue;
+          }
+          const auto expectedParsed = toml::parse("value = " + *expectedExpr);
+          if (toml::node_view(actual) != toml::node_view(expectedParsed.get("value"))) {
+            return std::format("the edit to '{}' would not take effect in the merged configuration", path.back());
+          }
+        }
+
+        for (const auto& file : staged) {
+          expectedWrites.emplace(file.path, file.content);
+        }
+        return std::nullopt;
+      }
+  );
+
+  if (!result.ok()) {
+    m_lastMutationError = result.error;
+    kLog.warn("cannot persist configuration: {}", result.error);
+    for (const auto& path : result.rollbackFailures) {
+      kLog.error("could not restore '{}'", path.string());
+    }
+    return false;
+  }
+
+  if (expectedWrites.empty()) {
+    return true;
+  }
+
+  for (auto& [path, content] : expectedWrites) {
+    m_selfWrites.insert_or_assign(path, std::move(content));
+  }
+  if (changed != nullptr) {
+    *changed = true;
+  }
+
+  if (reloadOnSuccess) {
+    loadAll();
+    fireReloadCallbacks();
+  } else if (candidate.has_value()) {
+    m_effectiveOverrideCache.clear();
+    m_sourceMap = std::move(candidate->sources);
+    m_includeLoadedFiles = std::move(candidate->config.loadedFiles);
+    m_includeDirs = std::move(candidate->config.includeDirs);
+    m_watchPaths = std::move(candidate->watchPaths);
+
+    toml::table merged = std::move(candidate->config.merged);
+    nythera::config::ConfigOriginIndex origins = std::move(candidate->config.origins);
+    toml::table sidecar;
+    bool hasSidecar = false;
+    (void)overlayLegacySidecar(merged, origins, sidecar, hasSidecar);
+
+    toml::table userTable = merged;
+    userTable.erase(nythera::config::kConfigVersionKey);
+    m_mergedUserTable = std::move(userTable);
+
+    merged.erase(nythera::config::kConfigVersionKey);
+    nythera::config::LegacyConfigIssues ignoredIssues;
+    nythera::config::normalizeLegacyConfig(merged, ignoredIssues, hasSidecar ? &sidecar : nullptr);
+    extractWallpaperFromTable(merged);
+    updateWatches();
+  }
+  return true;
 }
 
 bool ConfigService::hasConfiguredWallpaper() const {
@@ -931,8 +1249,6 @@ std::string ConfigService::getPaletteWallpaperPath() const {
   return m_defaultWallpaperPath;
 }
 
-void ConfigService::extractWallpaperFromOverrides() { extractWallpaperFromTable(m_overridesTable); }
-
 void ConfigService::extractWallpaperFromTable(const toml::table& table) {
   m_defaultWallpaperPath.clear();
   m_lastWallpaperPath.clear();
@@ -956,6 +1272,20 @@ void ConfigService::extractWallpaperFromTable(const toml::table& table) {
           m_monitorWallpaperPaths[std::string(key.str())] = FileUtils::expandUserPath(*v).string();
         }
       }
+    }
+  }
+
+  // Runtime wallpaper state in state.toml takes precedence over legacy/config entries.
+  if (auto stateDefault = m_stateStore.stringValue("wallpaper", "default");
+      stateDefault.has_value() && !stateDefault->empty()) {
+    m_defaultWallpaperPath = FileUtils::expandUserPath(*stateDefault).string();
+  }
+  if (auto stateLast = m_stateStore.stringValue("wallpaper", "last"); stateLast.has_value() && !stateLast->empty()) {
+    m_lastWallpaperPath = FileUtils::expandUserPath(*stateLast).string();
+  }
+  for (const auto& [connector, path] : m_stateStore.stringMap("wallpaper", "monitors")) {
+    if (!path.empty()) {
+      m_monitorWallpaperPaths[connector] = FileUtils::expandUserPath(path).string();
     }
   }
   if (const auto* favorites = table["wallpaper"]["favorite"].as_array()) {
@@ -1015,29 +1345,4 @@ const WallpaperFavorite* ConfigService::wallpaperFavorite(std::string_view path)
     }
   }
   return nullptr;
-}
-
-bool ConfigService::writeOverridesToFile(const OverrideDiagnostics& known) {
-  if (m_overridesPath.empty() || m_settingsAccess == SettingsAccess::InheritanceOnly) {
-    m_overridesTable = m_persistedOverridesTable;
-    return false;
-  }
-  if (!validateOverrideMutation(m_overridesTable, known)) {
-    m_overridesTable = m_persistedOverridesTable;
-    return false;
-  }
-  toml::table output = m_overridesTable;
-
-  std::ostringstream out;
-  out << toml::toml_formatter{output, toml::toml_formatter::default_flags & ~toml::format_flags::allow_literal_strings};
-  if (!out.good()) {
-    m_overridesTable = m_persistedOverridesTable;
-    return false;
-  }
-  if (!writeTextFileAtomic(m_overridesPath, out.str())) {
-    m_overridesTable = m_persistedOverridesTable;
-    return false;
-  }
-  m_persistedOverridesTable = m_overridesTable;
-  return true;
 }

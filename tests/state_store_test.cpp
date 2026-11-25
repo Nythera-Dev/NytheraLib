@@ -7,6 +7,8 @@
 #include <fstream>
 #include <print>
 #include <string>
+#include <string_view>
+#include <utility>
 
 namespace {
   bool expect(bool condition, const char* message) {
@@ -242,6 +244,51 @@ namespace {
     std::filesystem::remove_all(dir);
     return ok;
   }
+
+  bool stringMapAndSetValuesAtomicAndReadOnly() {
+    const auto dir = uniqueTestDir();
+    const auto path = dir / "state.toml";
+    std::filesystem::remove_all(dir);
+    std::filesystem::create_directories(dir);
+
+    StateStore store(path);
+    store.load();
+
+    const std::pair<std::string_view, std::string_view> strings[]{
+        {"default", "/wall/a.png"},
+        {"last", "/wall/b.png"},
+    };
+    const std::pair<std::string_view, std::string_view> monitors[]{
+        {"DP-1", "/wall/a.png"},
+        {"HDMI-A-1", "/wall/b.png"},
+    };
+
+    bool ok = true;
+    ok = expect(store.setValues("wallpaper", strings, "monitors", monitors), "setValues failed") && ok;
+    // Empty or invalid inputs must fail without writing or corrupting existing state.
+    const std::pair<std::string_view, std::string_view> invalidKey[]{{"BadKey", "/x.png"}};
+    ok = expect(!store.setValues("wallpaper", invalidKey), "invalid key accepted by setValues") && ok;
+
+    const auto readMap = store.stringMap("wallpaper", "monitors");
+    ok = expect(readMap.size() == 2, "stringMap entry count mismatch") && ok;
+    ok = expect(readMap.at("DP-1") == "/wall/a.png", "DP-1 entry mismatch") && ok;
+    ok = expect(readMap.at("HDMI-A-1") == "/wall/b.png", "HDMI-A-1 entry mismatch") && ok;
+    ok = expect(store.stringValue("wallpaper", "default").value_or("") == "/wall/a.png", "default mismatch") && ok;
+    ok = expect(store.stringValue("wallpaper", "last").value_or("") == "/wall/b.png", "last mismatch") && ok;
+
+    // loadReadOnly must read state without modifying existing file permissions.
+    std::error_code ec;
+    const auto looseMode = ownerOnlyMode() | std::filesystem::perms::group_read;
+    std::filesystem::permissions(path, looseMode, std::filesystem::perm_options::replace, ec);
+    StateStore reader(path);
+    reader.loadReadOnly();
+    ok = expect(fileMode(path) == looseMode, "loadReadOnly altered file permissions") && ok;
+    ok = expect(reader.stringMap("wallpaper", "monitors").at("DP-1") == "/wall/a.png", "loadReadOnly missed monitor")
+        && ok;
+
+    std::filesystem::remove_all(dir);
+    return ok;
+  }
 } // namespace
 
 int main() {
@@ -253,5 +300,6 @@ int main() {
   ok = wrongTypeIsNotReadAsBool() && ok;
   ok = atomicWritePreservesSymlink() && ok;
   ok = stateStorePreservesSymlink() && ok;
+  ok = stringMapAndSetValuesAtomicAndReadOnly() && ok;
   return ok ? 0 : 1;
 }

@@ -1,10 +1,11 @@
 #include "config/config_service.h"
 
-#include "config/config_notification_sink.h"
+#include "config/application_paths.h"
 #include "config/atomic_file.h"
 #include "config/config_export.h"
 #include "config/config_merge.h"
 #include "config/config_migrations.h"
+#include "config/config_notification_sink.h"
 #include "config/schema/config_schema.h"
 #include "config/schema/config_sections.h"
 #include "config/schema/engine.h"
@@ -28,6 +29,9 @@
 #include <cstring>
 #include <filesystem>
 #include <format>
+#include <fstream>
+#include <iterator>
+#include <map>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
@@ -42,10 +46,17 @@ namespace {
 
   // Completed writes, renames, creates (dotfile managers create symlinks) and removals. In-progress
   // writes (IN_MODIFY) are skipped; the debounce below covers the steps of a multi-step save.
-  constexpr std::uint32_t inotifyMask = IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE | IN_DELETE | IN_MOVED_FROM;
+  constexpr std::uint32_t inotifyMask =
+      IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_DELETE_SELF | IN_MOVE_SELF;
   constexpr std::chrono::milliseconds kWatchReloadDebounce{150};
 
   constexpr Logger kLog("config");
+
+  std::filesystem::path canonicalWatchPath(const std::filesystem::path& path) {
+    std::error_code ec;
+    auto resolved = std::filesystem::weakly_canonical(path, ec);
+    return ec ? path.lexically_normal() : resolved;
+  }
 
   template <typename T>
   void readConfigSection(
@@ -308,8 +319,10 @@ namespace {
 
   void seedLegacyDockAllowListEnabled(toml::table& sidecar, const toml::table& baseConfig) {
     auto* dock = sidecar["dock"].as_table();
-    if (dock == nullptr || (*dock)["monitors"].as_array() == nullptr || dock->contains("enabled")) return;
-    if (baseConfig["dock"]["enabled"].value_or(false)) dock->insert("enabled", true);
+    if (dock == nullptr || (*dock)["monitors"].as_array() == nullptr || dock->contains("enabled"))
+      return;
+    if (baseConfig["dock"]["enabled"].value_or(false))
+      dock->insert("enabled", true);
   }
 
 } // namespace
@@ -330,6 +343,79 @@ ConfigService::WallpaperBatch::~WallpaperBatch() {
   }
 }
 
+ConfigService::ActiveConfigLocation ConfigService::resolveActiveConfigLocation() {
+  const std::string shellDir = FileUtils::applicationConfigDir(FileUtils::Application::Shell);
+  const std::string sharedTheme = FileUtils::sharedThemeConfigPath();
+  const std::string legacyDir = FileUtils::configDir();
+  const std::string stateDir = FileUtils::stateDir();
+  const std::string legacySettings = stateDir.empty() ? std::string{} : stateDir + "/settings.toml";
+
+  const auto hasTomlFiles = [](const std::string& dir, std::string_view excludeName = {}) {
+    if (dir.empty()) {
+      return false;
+    }
+    std::error_code ec;
+    if (!std::filesystem::is_directory(dir, ec) || ec) {
+      return false;
+    }
+    for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
+      if (ec) {
+        break;
+      }
+      if (entry.path().extension() != ".toml") {
+        continue;
+      }
+      if (!excludeName.empty() && entry.path().filename() == excludeName) {
+        continue;
+      }
+      std::error_code fileEc;
+      if (entry.is_regular_file(fileEc) && !fileEc) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (!shellDir.empty() && hasTomlFiles(shellDir)) {
+    return {
+        .configDir = shellDir,
+        .sharedThemePath = sharedTheme,
+        .legacySettingsPath = {},
+        .usingLegacy = false,
+    };
+  }
+
+  std::error_code ec;
+  const bool hasLegacySettings = !legacySettings.empty() && std::filesystem::exists(legacySettings, ec) && !ec;
+  if ((!legacyDir.empty() && hasTomlFiles(legacyDir, "theme.toml")) || hasLegacySettings) {
+    return {
+        .configDir = legacyDir,
+        .sharedThemePath = {},
+        .legacySettingsPath = hasLegacySettings ? legacySettings : std::string{},
+        .usingLegacy = true,
+    };
+  }
+
+  return {
+      .configDir = shellDir,
+      .sharedThemePath = sharedTheme,
+      .legacySettingsPath = {},
+      .usingLegacy = false,
+  };
+}
+
+std::string ConfigService::resolveActiveStateDir() {
+  const std::string shellStateDir = FileUtils::applicationStateDir(FileUtils::Application::Shell);
+  if (shellStateDir.empty()) {
+    return {};
+  }
+  std::error_code ec;
+  if (std::filesystem::exists(shellStateDir, ec) || !resolveActiveConfigLocation().usingLegacy) {
+    return shellStateDir;
+  }
+  return FileUtils::stateDir();
+}
+
 ConfigService::ConfigService(MergedConfigValidator validator, OverrideEffectivenessChecker effectiveness)
     : ConfigService(SettingsAccess::ReadWrite, std::move(validator), std::move(effectiveness)) {}
 
@@ -339,23 +425,20 @@ ConfigService::ConfigService(
     SettingsAccess access, MergedConfigValidator validator, OverrideEffectivenessChecker effectiveness
 )
     : m_settingsAccess(access), m_validator(std::move(validator)), m_effectivenessChecker(std::move(effectiveness)) {
-  m_configDir = FileUtils::configDir();
-
-  // Resolve settings.toml path; create the state dir eagerly so writes don't
-  // race with directory creation later.
-  if (auto dir = FileUtils::stateDir(); !dir.empty()) {
-    std::error_code ec;
-    std::filesystem::create_directories(dir, ec);
-    m_overridesPath = dir + "/settings.toml";
-    if (access != SettingsAccess::InheritanceOnly)
-      m_stateStore.setPath(dir + "/state.toml");
+  if (const std::string dir = resolveActiveStateDir(); !dir.empty()) {
+    if (access != SettingsAccess::InheritanceOnly) {
+      std::error_code ec;
+      std::filesystem::create_directories(dir, ec);
+    }
+    m_stateStore.setPath(dir + "/state.toml");
     m_setupMarkerPath = dir + "/.setup-complete";
   }
 
-  loadOverridesFromFile();
-  m_stateStore.load();
+  if (access != SettingsAccess::InheritanceOnly) {
+    m_stateStore.load();
+  }
   loadAll();
-  setupWatch();
+  updateWatches();
 }
 
 // ── Public interface ─────────────────────────────────────────────────────────
@@ -464,7 +547,15 @@ bool ConfigService::shouldRunSetupWizard() const {
   }
   // Single canonical signal: the marker file. If we have no state dir we cannot
   // persist completion, so never show the wizard (it would loop forever).
-  return !m_setupMarkerPath.empty() && !std::filesystem::exists(m_setupMarkerPath);
+  if (m_setupMarkerPath.empty() || std::filesystem::exists(m_setupMarkerPath)) {
+    return false;
+  }
+  // Unmigrated live state keeps the completion marker directly under stateDir().
+  const std::string legacyDir = FileUtils::stateDir();
+  if (!legacyDir.empty() && std::filesystem::exists(legacyDir + "/.setup-complete")) {
+    return false;
+  }
+  return true;
 }
 
 std::optional<bool> ConfigService::stateBool(std::string_view owner, std::string_view key) const {
@@ -472,6 +563,9 @@ std::optional<bool> ConfigService::stateBool(std::string_view owner, std::string
 }
 
 bool ConfigService::setStateBool(std::string_view owner, std::string_view key, bool value) {
+  if (m_settingsAccess == SettingsAccess::InheritanceOnly) {
+    return false;
+  }
   return m_stateStore.setBool(owner, key, value);
 }
 
@@ -489,6 +583,9 @@ ConfigService::stateStringArray(std::string_view owner, std::string_view key) co
 bool ConfigService::setStateStringArray(
     std::string_view owner, std::string_view key, const std::vector<std::string>& value
 ) {
+  if (m_settingsAccess == SettingsAccess::InheritanceOnly) {
+    return false;
+  }
   return m_stateStore.setStringArray(owner, key, value);
 }
 
@@ -497,10 +594,18 @@ std::optional<std::string> ConfigService::stateString(std::string_view owner, st
 }
 
 bool ConfigService::setStateString(std::string_view owner, std::string_view key, std::string_view value) {
+  if (m_settingsAccess == SettingsAccess::InheritanceOnly) {
+    return false;
+  }
   return m_stateStore.setString(owner, key, value);
 }
 
-bool ConfigService::clearStateOwner(std::string_view owner) { return m_stateStore.clearOwner(owner); }
+bool ConfigService::clearStateOwner(std::string_view owner) {
+  if (m_settingsAccess == SettingsAccess::InheritanceOnly) {
+    return false;
+  }
+  return m_stateStore.clearOwner(owner);
+}
 
 Config ConfigService::makeDefaultConfig() {
   Config config;
@@ -519,78 +624,74 @@ void ConfigService::checkReload() {
   }
 
   bool configChanged = false;
-  bool overridesChanged = false;
 
-  m_inotify.drain([this, &configChanged, &overridesChanged](const inotify_event* event) {
-    if (event->len > 0) {
-      const std::string_view name{event->name};
-      if (event->wd == m_configWatchWd && name.ends_with(".toml")) {
-        configChanged = true;
-      }
+  m_inotify.drain([this, &configChanged](const inotify_event* event) {
+    if ((event->mask & IN_Q_OVERFLOW) != 0) {
+      configChanged = true;
+      return;
+    }
+    const auto watch = m_watches.find(event->wd);
+    if (watch == m_watches.end()) {
+      return;
+    }
+    if (event->len == 0) {
+      configChanged = true;
+      return;
+    }
 
-      if (event->wd == m_overridesWatchWd) {
-        const auto overridesFilename = std::filesystem::path(m_overridesPath).filename().string();
-        if (name == overridesFilename) {
-          overridesChanged = true;
+    const std::string_view name{event->name};
+    if (!watch->second.names.contains(std::string(name)) && !(watch->second.scanToml && name.ends_with(".toml"))) {
+      return;
+    }
+
+    // An ordinary new regular file is read after its writer closes it. Symlinks and new
+    // directories (e.g. ~/.config/nythera/shell) have no close-write event and apply now.
+    if ((event->mask & IN_CREATE) != 0) {
+      if ((event->mask & IN_ISDIR) != 0) {
+        const auto createdDir = canonicalWatchPath(watch->second.directory / name);
+        if (std::ranges::any_of(m_watches, [&](const auto& entry) { return entry.second.directory == createdDir; })) {
+          return;
         }
-      }
-
-      // Check whether this event comes from a symlink-target directory.
-      const auto symIt = m_symlinkDirWds.find(event->wd);
-      if (symIt != m_symlinkDirWds.end()) {
-        for (const auto& watched : symIt->second) {
-          if (name != watched.filename) {
-            continue;
-          }
-          if (watched.overrides) {
-            overridesChanged = true;
-          } else {
-            configChanged = true;
-          }
+      } else {
+        std::error_code ec;
+        if (!std::filesystem::is_symlink(watch->second.directory / name, ec)) {
+          return;
         }
-      }
-
-      // Any *.toml change in a watched [include] directory is a config change.
-      if (m_includeDirWds.contains(event->wd) && name.ends_with(".toml")) {
-        configChanged = true;
       }
     }
+
+    const auto filePath = watch->second.directory / name;
+    if (const auto selfIt = m_selfWrites.find(filePath);
+        selfIt != m_selfWrites.end() && (event->mask & IN_MOVED_TO) != 0) {
+      std::ifstream input(selfIt->first, std::ios::binary);
+      if (input && std::string(std::istreambuf_iterator<char>(input), {}) == selfIt->second) {
+        return;
+      }
+    }
+
+    configChanged = true;
   });
+  m_selfWrites.clear();
 
-  // Skip the echo of our own write.
-  if (overridesChanged && m_ownOverridesWritePending) {
-    m_ownOverridesWritePending = false;
-    overridesChanged = false;
-  }
-
-  if (!configChanged && !overridesChanged) {
+  if (!configChanged) {
     return;
   }
 
   // Editors save in several steps (truncate then write, rename the old file away then write the
   // new one, write a temp file then rename it over). Reload once the burst settles so a half-saved
   // or briefly missing file is never applied.
-  m_pendingConfigReload = m_pendingConfigReload || configChanged;
-  m_pendingOverridesReload = m_pendingOverridesReload || overridesChanged;
+  m_pendingConfigReload = true;
   m_watchReloadTimer.start(kWatchReloadDebounce, [this] { applyPendingWatchReload(); });
 }
 
 void ConfigService::applyPendingWatchReload() {
-  const bool overridesChanged = std::exchange(m_pendingOverridesReload, false);
-  const bool configChanged = std::exchange(m_pendingConfigReload, false) || overridesChanged;
+  if (!std::exchange(m_pendingConfigReload, false)) {
+    return;
+  }
 
   const auto oldDefault = m_defaultWallpaperPath;
   const auto oldLast = m_lastWallpaperPath;
   const auto oldMonitors = m_monitorWallpaperPaths;
-
-  if (overridesChanged) {
-    kLog.info("reloading {}", m_overridesPath);
-    loadOverridesFromFile();
-  }
-
-  if (!configChanged) {
-    return;
-  }
 
   kLog.info("config changed, reloading");
   loadAll();
@@ -803,168 +904,167 @@ DockConfig ConfigService::resolveForOutput(const DockConfig& base, const Wayland
 
 // ── Private helpers ──────────────────────────────────────────────────────────
 
-void ConfigService::setupWatch() {
-  if (m_configDir.empty()) {
+void ConfigService::updateWatches() {
+  if (m_inotify.fd() < 0 || (m_configDir.empty() && m_sharedThemePath.empty() && m_stateStore.path().empty())) {
     return;
   }
 
-  std::error_code ec;
-  std::filesystem::create_directories(m_configDir, ec);
-
-  const auto watchId = m_inotify.watch(m_configDir.c_str(), inotifyMask);
-  if (!watchId.has_value()) {
-    kLog.warn("inotify_add_watch failed, hot reload disabled");
-    return;
-  }
-  m_configWatchWd = watchId.value();
-
-  kLog.debug("watching {} for changes", m_configDir);
-
-  // For any *.toml entries that are symlinks, also watch the real target's parent
-  // directory so that edits to the target file (e.g. via dotfile management) trigger
-  // a reload even though the modification event fires in a different directory.
-  std::error_code scanEc;
-  for (const auto& entry : std::filesystem::directory_iterator(m_configDir, scanEc)) {
-    if (entry.path().extension() != ".toml") {
-      continue;
+  std::map<std::filesystem::path, WatchEntry> desired;
+  const auto add = [&](std::filesystem::path path, bool contents) {
+    if (path.empty()) {
+      return;
     }
-    std::error_code symlinkEc;
-    if (!entry.is_symlink(symlinkEc) || symlinkEc) {
-      continue;
+    std::error_code error;
+    std::filesystem::path name;
+    if (!contents) {
+      name = path.filename();
+      path = path.parent_path();
     }
-    std::error_code canonEc;
-    const auto real = std::filesystem::canonical(entry.path(), canonEc);
-    if (canonEc) {
-      continue;
+    while (!path.empty() && !std::filesystem::is_directory(path, error)) {
+      name = path.filename();
+      const auto parent = path.parent_path();
+      if (parent == path) {
+        return;
+      }
+      path = parent;
     }
-    const auto realDir = real.parent_path().string();
-    const auto realName = real.filename().string();
-    // inotify.watch is idempotent per inode — if realDir == m_configDir the
-    // existing watch descriptor is returned and we simply record the extra name.
-    const auto wd = m_inotify.watch(realDir.c_str(), inotifyMask);
-    if (wd.has_value()) {
-      m_symlinkDirWds[wd.value()].push_back(SymlinkTargetWatch{.filename = realName, .overrides = false});
-      kLog.debug("watching symlink target {} in {}", realName, realDir);
+    if (path.empty()) {
+      return;
     }
-  }
-
-  // Also watch the state dir for settings.toml edits (external writes).
-  if (!m_overridesPath.empty()) {
-    const auto overridesDir = std::filesystem::path(m_overridesPath).parent_path().string();
-    const auto wd = m_inotify.watch(overridesDir.c_str(), inotifyMask);
-    if (!wd.has_value()) {
-      kLog.warn("inotify_add_watch failed for {}, overrides reload disabled", overridesDir);
+    const auto resolved = canonicalWatchPath(path);
+    auto& watch = desired[resolved];
+    watch.directory = resolved;
+    if (name.empty()) {
+      watch.scanToml = true;
     } else {
-      kLog.debug("watching {} for changes", overridesDir);
-      m_overridesWatchWd = wd.value();
+      watch.names.insert(name.string());
     }
+  };
 
-    const auto target = resolveAtomicWriteTarget(m_overridesPath);
-    if (target.has_value() && target->throughSymlink) {
-      const auto realDir = target->path.parent_path().string();
-      const auto realName = target->path.filename().string();
-      const auto targetWd = m_inotify.watch(realDir.c_str(), inotifyMask);
-      if (targetWd.has_value()) {
-        m_symlinkDirWds[targetWd.value()].push_back(SymlinkTargetWatch{.filename = realName, .overrides = true});
-        kLog.debug("watching settings symlink target {} in {}", realName, realDir);
+  add(m_configDir, true);
+  add(m_configDir, false);
+  if (m_usingLegacyConfigDir) {
+    if (const std::string shellDir = FileUtils::applicationConfigDir(FileUtils::Application::Shell);
+        !shellDir.empty()) {
+      add(shellDir, true);
+      add(shellDir, false);
+    }
+    if (!m_legacySettingsPath.empty()) {
+      const std::filesystem::path legacyPath(m_legacySettingsPath);
+      add(legacyPath, false);
+      const auto target = canonicalWatchPath(legacyPath);
+      if (target != legacyPath) {
+        add(target, false);
+      }
+      std::error_code ec;
+      const auto link = std::filesystem::read_symlink(legacyPath, ec);
+      if (!ec) {
+        add(link.is_absolute() ? link : legacyPath.parent_path() / link, false);
       }
     }
   }
 
-  // The ctor's first loadAll() ran before this fd existed, so establish the
-  // initial [include] directory watches now.
-  refreshIncludeWatches();
-}
-
-void ConfigService::refreshIncludeWatches() {
-  if (m_inotify.fd() < 0) {
-    return;
-  }
-
-  const auto canonical = [](const std::filesystem::path& p) {
-    std::error_code ec;
-    const auto c = std::filesystem::weakly_canonical(p, ec);
-    return (ec ? p.lexically_normal() : c).string();
-  };
-
-  // Desired = parent dir of every loaded file + every directory named in an
-  // [include].files list, minus dirs already covered by the primary watches.
-  std::unordered_set<std::string> desired;
-  for (const auto& file : m_includeLoadedFiles) {
-    auto dir = canonical(file.parent_path());
-    if (!dir.empty()) {
-      desired.insert(std::move(dir));
-    }
-  }
   for (const auto& dir : m_includeDirs) {
-    auto canon = canonical(dir);
-    if (!canon.empty()) {
-      desired.insert(std::move(canon));
+    add(dir, true);
+  }
+  const auto watchFilePath = [&](const std::filesystem::path& path) {
+    add(path, false);
+    const auto target = canonicalWatchPath(path);
+    if (target != path) {
+      add(target, false);
     }
+    std::error_code ec;
+    const auto link = std::filesystem::read_symlink(path, ec);
+    if (!ec) {
+      add(link.is_absolute() ? link : path.parent_path() / link, false);
+    }
+  };
+  for (const auto& path : m_watchPaths) {
+    watchFilePath(path);
   }
-  if (!m_configDir.empty()) {
-    desired.erase(canonical(std::filesystem::path(m_configDir)));
+  for (const auto& path : m_includeLoadedFiles) {
+    watchFilePath(path);
   }
-  if (!m_overridesPath.empty()) {
-    desired.erase(canonical(std::filesystem::path(m_overridesPath).parent_path()));
+  if (!m_sharedThemePath.empty()) {
+    watchFilePath(m_sharedThemePath);
+  }
+  if (m_settingsAccess == SettingsAccess::InheritanceOnly && !m_stateStore.path().empty()) {
+    watchFilePath(m_stateStore.path());
   }
 
-  // Drop watches no longer wanted.
-  for (auto it = m_includeDirWatches.begin(); it != m_includeDirWatches.end();) {
-    if (!desired.contains(it->first)) {
-      m_inotify.unwatch(it->second);
-      m_includeDirWds.erase(it->second);
-      it = m_includeDirWatches.erase(it);
-    } else {
-      ++it;
+  std::map<int, WatchEntry> watches;
+  for (auto& [path, watch] : desired) {
+    if (const auto descriptor = m_inotify.watch(path.c_str(), inotifyMask)) {
+      watches.emplace(*descriptor, std::move(watch));
     }
   }
-
-  // Add newly wanted watches.
-  for (const auto& dir : desired) {
-    if (m_includeDirWatches.contains(dir)) {
-      continue;
+  for (const auto& [descriptor, watch] : m_watches) {
+    (void)watch;
+    if (!watches.contains(descriptor)) {
+      m_inotify.unwatch(descriptor);
     }
-    const auto wd = m_inotify.watch(dir.c_str(), inotifyMask);
-    if (!wd.has_value()) {
-      continue;
-    }
-    // inotify_add_watch is idempotent per inode: if this dir is already watched by
-    // the config/overrides/symlink-target watches, the existing wd comes back. Do
-    // not record it (and never remove it) — its original owner manages its lifetime.
-    if (wd == m_configWatchWd || wd == m_overridesWatchWd || m_symlinkDirWds.contains(*wd)) {
-      continue;
-    }
-    m_includeDirWatches.emplace(dir, *wd);
-    m_includeDirWds.insert(*wd);
-    kLog.debug("watching include directory {}", dir);
   }
+  m_watches = std::move(watches);
 }
 
-void ConfigService::loadOverridesFromFile() {
-  m_overridesTable = toml::table{};
-  m_defaultWallpaperPath.clear();
-  m_lastWallpaperPath.clear();
-  m_monitorWallpaperPaths.clear();
-  m_overridesParseError = {};
-
-  if (m_overridesPath.empty() || !std::filesystem::exists(m_overridesPath)) {
-    m_persistedOverridesTable = toml::table{};
-    return;
+bool ConfigService::overlayLegacySidecar(
+    toml::table& merged, nythera::config::ConfigOriginIndex& origins, toml::table& sidecar, bool& hasSidecar,
+    ConfigProblem* errorOut
+) const {
+  sidecar.clear();
+  hasSidecar = false;
+  if (!m_usingLegacyConfigDir || m_legacySettingsPath.empty()) {
+    return true;
   }
 
-  kLog.info("loading {}", m_overridesPath);
+  std::error_code ec;
+  const std::filesystem::path settingsFile(m_legacySettingsPath);
+  if (!std::filesystem::exists(settingsFile, ec) || ec) {
+    return true;
+  }
+
   try {
-    m_overridesTable = toml::parse_file(m_overridesPath);
-    m_persistedOverridesTable = m_overridesTable;
+    sidecar = toml::parse_file(m_legacySettingsPath);
   } catch (const toml::parse_error& e) {
-    auto origin = nythera::config::parseErrorOrigin(e, std::filesystem::path(m_overridesPath));
+    auto origin = nythera::config::parseErrorOrigin(e, settingsFile);
     kLog.warn("{}", origin.prefixed(e.description()));
-    m_overridesParseError = ConfigProblem{std::move(origin), std::string(e.description())};
-    m_overridesTable = toml::table{};
-    return;
+    if (errorOut != nullptr && errorOut->empty()) {
+      *errorOut = ConfigProblem{std::move(origin), std::string(e.description())};
+    }
+    sidecar.clear();
+    return false;
   }
-  extractWallpaperFromOverrides();
+
+  origins.record(settingsFile, sidecar);
+  seedLegacyDockAllowListEnabled(sidecar, merged);
+
+  schema::Diagnostics migrationDiag;
+  if (const auto parsedVersion = nythera::config::storedConfigVersion(sidecar, migrationDiag);
+      parsedVersion.has_value()) {
+    const int appliedVersion =
+        nythera::config::applyPendingConfigMigrations(sidecar, merged, *parsedVersion, migrationDiag);
+    sidecar.insert_or_assign(nythera::config::kConfigVersionKey, static_cast<std::int64_t>(appliedVersion));
+  }
+  origins.annotate(migrationDiag);
+
+  bool hasMigrationError = false;
+  for (const auto& entry : migrationDiag.entries) {
+    if (entry.severity == schema::Diagnostics::Severity::Error) {
+      hasMigrationError = true;
+      if (errorOut != nullptr && errorOut->empty()) {
+        *errorOut = ConfigProblem::from(entry);
+      }
+    } else {
+      kLog.warn("{}", entry.describe());
+    }
+  }
+  if (hasMigrationError) {
+    return false;
+  }
+
+  deepMerge(merged, sidecar);
+  hasSidecar = true;
+  return true;
 }
 
 void ConfigService::setConfigParseError(ConfigProblem problem) {
@@ -1137,139 +1237,70 @@ void ConfigService::loadAll() {
   nythera::profiling::ScopedTimer parseTimer(kLog, "reload: parse (loadAll)");
   m_effectiveOverrideCache.clear();
 
+  const ActiveConfigLocation location = resolveActiveConfigLocation();
+  m_configDir = location.configDir;
+  m_sharedThemePath = location.sharedThemePath;
+  m_legacySettingsPath = location.legacySettingsPath;
+  m_usingLegacyConfigDir = location.usingLegacy;
+
+  if (m_settingsAccess == SettingsAccess::InheritanceOnly) {
+    if (const std::string stateDir = resolveActiveStateDir(); !stateDir.empty()) {
+      m_stateStore.setPath(stateDir + "/state.toml");
+      m_stateStore.loadReadOnly();
+    }
+  }
+
   Config nextConfig;
   nythera::config::seedBuiltinWidgets(nextConfig);
 
-  auto mergeResult = nythera::config::mergeConfigWithIncludes(m_configDir);
-  toml::table merged = std::move(mergeResult.merged);
-  std::string firstError = std::move(mergeResult.firstError);
-  const nythera::config::schema::SourceOrigin firstErrorOrigin = std::move(mergeResult.firstErrorOrigin);
-  m_includeLoadedFiles = std::move(mergeResult.loadedFiles);
-  m_includeDirs = std::move(mergeResult.includeDirs);
+  std::vector<std::filesystem::path> baseFiles;
+  if (!m_sharedThemePath.empty()) {
+    baseFiles.emplace_back(m_sharedThemePath);
+  }
+  auto loaded = nythera::config::mergeConfigWithSources(m_configDir, {}, baseFiles);
+  toml::table merged = std::move(loaded.config.merged);
+  std::string firstError = std::move(loaded.config.firstError);
+  const nythera::config::schema::SourceOrigin firstErrorOrigin = std::move(loaded.config.firstErrorOrigin);
+  m_includeLoadedFiles = std::move(loaded.config.loadedFiles);
+  m_includeDirs = std::move(loaded.config.includeDirs);
+  m_watchPaths = std::move(loaded.watchPaths);
 
-  // Recorded after the config dir so the sidecar wins, matching the deepMerge below.
-  nythera::config::ConfigOriginIndex origins = std::move(mergeResult.origins);
-  if (!m_overridesPath.empty()) {
-    origins.record(std::filesystem::path(m_overridesPath), m_overridesTable);
-  }
+  nythera::config::ConfigOriginIndex origins = std::move(loaded.config.origins);
+  toml::table legacySidecar;
+  bool hasLegacySidecar = false;
+  ConfigProblem legacySidecarError;
+  (void)overlayLegacySidecar(merged, origins, legacySidecar, hasLegacySidecar, &legacySidecarError);
 
-  decltype(m_configFileBarNames) configFileBarNames;
-  decltype(m_configFileMonitorOverrideNames) configFileMonitorOverrideNames;
-  decltype(m_configFileDockMonitorOverrideNames) configFileDockMonitorOverrideNames;
-  decltype(m_configFileCalendarAccountNames) configFileCalendarAccountNames;
-  if (auto* barTblMap = merged["bar"].as_table()) {
-    for (const auto& [barName, barNode] : *barTblMap) {
-      auto* barTbl = barNode.as_table();
-      if (barTbl == nullptr) {
-        continue;
-      }
-      const std::string barNameStr(barName.str());
-      configFileBarNames.insert(barNameStr);
-      if (auto* monTblMap = (*barTbl)["monitor"].as_table()) {
-        auto& monitorNames = configFileMonitorOverrideNames[barNameStr];
-        for (const auto& [monName, monNode] : *monTblMap) {
-          auto* monTbl = monNode.as_table();
-          if (monTbl == nullptr) {
-            continue;
-          }
-          if (auto match = (*monTbl)["match"].value<std::string>()) {
-            monitorNames.insert(*match);
-          } else {
-            monitorNames.insert(std::string(monName.str()));
-          }
-        }
-      }
-    }
-  }
-  if (auto* dockTbl = merged["dock"].as_table()) {
-    if (auto* monTblMap = (*dockTbl)["monitor"].as_table()) {
-      for (const auto& [monName, monNode] : *monTblMap) {
-        if (monNode.is_table()) {
-          configFileDockMonitorOverrideNames.insert(std::string(monName.str()));
-        }
-      }
-    }
-    if (auto* legacyMonitors = (*dockTbl)["monitors"].as_array()) {
-      for (const auto& node : *legacyMonitors) {
-        if (const auto selector = node.value<std::string>(); selector.has_value() && !selector->empty()) {
-          configFileDockMonitorOverrideNames.insert(*selector);
-        }
-      }
-    }
-  }
-  if (auto* calendarTbl = merged["calendar"].as_table()) {
-    if (auto* accountTblMap = (*calendarTbl)["account"].as_table()) {
-      for (const auto& [accountName, accountNode] : *accountTblMap) {
-        if (accountNode.as_table() != nullptr) {
-          configFileCalendarAccountNames.insert(std::string(accountName.str()));
-        }
-      }
-    }
-  }
+  toml::table userTable = merged;
+  userTable.erase(nythera::config::kConfigVersionKey);
 
-  toml::table effectiveOverrides = m_overridesTable;
-  schema::Diagnostics migrationDiag;
-  ConfigProblem migrationError;
-  int storedVersion = nythera::config::currentConfigVersion();
-  int appliedVersion = storedVersion;
-  bool sidecarNeedsPersist = false;
-  if (!m_overridesTable.empty()) {
-    seedLegacyDockAllowListEnabled(effectiveOverrides, merged);
-    const auto parsedVersion = nythera::config::storedConfigVersion(effectiveOverrides, migrationDiag);
-    if (parsedVersion.has_value()) {
-      storedVersion = *parsedVersion;
-      appliedVersion =
-          nythera::config::applyPendingConfigMigrations(effectiveOverrides, merged, storedVersion, migrationDiag);
-      sidecarNeedsPersist = appliedVersion != storedVersion;
-      effectiveOverrides.insert_or_assign(
-          nythera::config::kConfigVersionKey, static_cast<std::int64_t>(appliedVersion)
-      );
-    }
-  }
-  origins.annotate(migrationDiag);
-  for (const auto& entry : migrationDiag.entries) {
-    if (entry.severity == schema::Diagnostics::Severity::Error) {
-      if (migrationError.empty()) {
-        migrationError = ConfigProblem::from(entry);
-      }
-    } else {
-      kLog.warn("{}", entry.describe());
-    }
-  }
-
-  // Apply the app-writable overrides overlay last; sidecar wins. Compatibility
-  // normalization must see the final effective values to preserve overlay intent.
-  deepMerge(merged, effectiveOverrides);
   merged.erase(nythera::config::kConfigVersionKey);
   nythera::config::LegacyConfigIssues legacyIssues;
-  nythera::config::normalizeLegacyConfig(merged, legacyIssues, &effectiveOverrides);
+  nythera::config::normalizeLegacyConfig(merged, legacyIssues, hasLegacySidecar ? &legacySidecar : nullptr);
   for (auto& issue : legacyIssues) {
     if (const auto* origin = origins.find(issue.path)) {
       issue.origin = *origin;
     }
   }
 
-  if (m_includeLoadedFiles.empty() && m_overridesTable.empty()) {
+  ConfigProblem semanticError = !firstError.empty() ? ConfigProblem{firstErrorOrigin, std::move(firstError)}
+      : !legacySidecarError.empty()                 ? std::move(legacySidecarError)
+                                                    : ConfigProblem{};
+
+  if (semanticError.empty() && m_includeLoadedFiles.empty() && !hasLegacySidecar) {
     kLog.info("no config files found, using defaults");
     m_lastChange = ConfigChangeSet{};
     m_config = makeDefaultConfig();
-    m_configFileBarNames.clear();
-    m_configFileMonitorOverrideNames.clear();
-    m_configFileDockMonitorOverrideNames.clear();
-    m_configFileCalendarAccountNames.clear();
-    m_defaultWallpaperPath.clear();
-    m_lastWallpaperPath.clear();
-    m_monitorWallpaperPaths.clear();
+    m_sourceMap = std::move(loaded.sources);
+    m_mergedUserTable = toml::table{};
+    extractWallpaperFromTable(toml::table{});
     updateLegacyConfigIssues({});
-    setConfigParseError(m_overridesParseError);
+    setConfigParseError({});
     m_configTable = std::make_shared<const toml::table>(config_export::serialize(m_config));
-    refreshIncludeWatches();
+    updateWatches();
     return;
   }
 
-  ConfigProblem semanticError = !firstError.empty() ? ConfigProblem{firstErrorOrigin, std::move(firstError)}
-      : !m_overridesParseError.empty()              ? m_overridesParseError
-                                                    : migrationError;
   ConfigProblem diagnosticError;
   schema::Diagnostics diagnostics;
   if (semanticError.empty()) {
@@ -1315,44 +1346,27 @@ void ConfigService::loadAll() {
   if (semanticError.empty()) {
     m_lastChange = computeConfigChangeSet(m_config, nextConfig);
     m_config = std::move(nextConfig);
-    m_configFileBarNames = std::move(configFileBarNames);
-    m_configFileMonitorOverrideNames = std::move(configFileMonitorOverrideNames);
-    m_configFileDockMonitorOverrideNames = std::move(configFileDockMonitorOverrideNames);
-    m_configFileCalendarAccountNames = std::move(configFileCalendarAccountNames);
+    m_sourceMap = std::move(loaded.sources);
+    m_mergedUserTable = std::move(userTable);
     extractWallpaperFromTable(merged);
     updateLegacyConfigIssues(std::move(legacyIssues));
-
-    if (sidecarNeedsPersist && m_settingsAccess == SettingsAccess::ReadWrite) {
-      toml::table previousOverrides = m_overridesTable;
-      m_overridesTable = std::move(effectiveOverrides);
-      if (writeOverridesToFile()) {
-        m_ownOverridesWritePending = m_inotify.fd() >= 0 && m_overridesWatchWd >= 0;
-      } else {
-        kLog.warn("failed to persist migrated config overrides to {}", m_overridesPath);
-        m_overridesTable = std::move(previousOverrides);
-      }
-    }
   } else if (m_config.bars.empty()) {
     m_lastChange = ConfigChangeSet{};
     m_config = makeDefaultConfig();
-    m_configFileBarNames.clear();
-    m_configFileMonitorOverrideNames.clear();
-    m_configFileDockMonitorOverrideNames.clear();
-    m_configFileCalendarAccountNames.clear();
-    m_defaultWallpaperPath.clear();
-    m_lastWallpaperPath.clear();
-    m_monitorWallpaperPaths.clear();
+    m_sourceMap = nythera::config::ConfigSourceMap{};
+    m_mergedUserTable = toml::table{};
+    extractWallpaperFromTable(toml::table{});
   } else {
     // Parse error with a usable previous config retained — fan out conservatively.
     m_lastChange = ConfigChangeSet{};
   }
 
-  // semanticError already absorbed the merge / overrides / migration errors above.
+  // semanticError already absorbed the merge / legacy sidecar / migration errors above.
   setConfigParseError(!semanticError.empty() ? std::move(semanticError) : std::move(diagnosticError));
 
   // Included files may live in subdirectories or absolute paths outside the config
   // dir, and the include set can change on every reload — reconcile their watches.
-  refreshIncludeWatches();
+  updateWatches();
 
   m_configTable = std::make_shared<const toml::table>(config_export::serialize(m_config));
 }

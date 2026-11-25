@@ -1,8 +1,10 @@
 #include "config/config_merge.h"
 #include "config/toml_persistence.h"
+#include "core/log.h"
 #include "test_isolation.h"
 
 #include <fstream>
+#include <iterator>
 
 namespace {
 
@@ -124,6 +126,44 @@ actions = "ignored"
     TEST_CHECK(fs::equivalent(optedOut.sources.winner(retained)->origin.file, hidden));
   }
 
+  void checkDuplicateDiscoveryAndCycles(const nythera::test::ScopedTestEnv& env) {
+    const auto root = env.work() / "files";
+    TEST_CHECK(fs::create_directory(root));
+    const auto config = root / "config.toml";
+    const auto theme = root / "theme.toml";
+    const auto logPath = env.cache() / "nythera" / "nythera.log";
+    const ConfigKeyPath mode{"theme", "transparency_mode"};
+    const auto readLog = [&] {
+      std::ifstream log(logPath);
+      TEST_CHECK(log);
+      return std::string(std::istreambuf_iterator<char>(log), {});
+    };
+
+    initLogFile();
+    write(config, "[include]\nfiles = ['theme.toml']\n[theme]\ntransparency_mode = 'soft'\n");
+    write(theme, "[theme]\ntransparency_mode = 'glass'\n");
+    const auto checkMerge = [&] {
+      const auto loaded = mergeConfigWithSources(root.string());
+      TEST_CHECK(loaded.config.firstError.empty());
+      TEST_CHECK(loaded.config.loadedFiles.size() == 2);
+      TEST_CHECK(loaded.config.merged["theme"]["transparency_mode"].value<std::string>() == "soft");
+      const auto definitions = loaded.sources.definitions(mode);
+      TEST_CHECK(definitions.size() == 2);
+      TEST_CHECK(definitions[0].origin.file == theme);
+      TEST_CHECK(definitions[1].origin.file == config);
+    };
+    checkMerge();
+    TEST_CHECK(!readLog().contains("config include"));
+
+    write(config, "[include]\nautoload = false\nfiles = ['theme.toml']\n[theme]\ntransparency_mode = 'soft'\n");
+    checkMerge();
+    TEST_CHECK(!readLog().contains("config include"));
+
+    write(theme, "[include]\nfiles = ['config.toml']\n[theme]\ntransparency_mode = 'glass'\n");
+    checkMerge();
+    TEST_CHECK(readLog().contains("config include cycle skipped: " + config.string()));
+  }
+
 } // namespace
 
 int main() {
@@ -131,5 +171,6 @@ int main() {
     const nythera::test::ScopedTestEnv env({.prefix = "nythera-config-sources"});
     checkSourcesAndWriteBack(env);
     checkGroupBoundaries(env);
+    checkDuplicateDiscoveryAndCycles(env);
   });
 }

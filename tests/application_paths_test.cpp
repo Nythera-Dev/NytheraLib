@@ -9,6 +9,7 @@ namespace {
     TEST_CHECK(FileUtils::stateDir() == state);
     TEST_CHECK(FileUtils::applicationConfigDir(Application::Shell) == config / "shell");
     TEST_CHECK(FileUtils::applicationConfigDir(Application::Files) == config / "files");
+    TEST_CHECK(FileUtils::sharedThemeConfigPath() == config / "theme.toml");
     TEST_CHECK(FileUtils::applicationStateDir(Application::Shell) == state / "shell");
     TEST_CHECK(FileUtils::applicationStateDir(Application::Files) == state / "files");
   }
@@ -34,5 +35,6 @@ int main() {
     const ScopedEnvVar noHome("HOME", nullptr);
     TEST_CHECK(FileUtils::applicationConfigDir(FileUtils::Application::Shell).empty());
     TEST_CHECK(FileUtils::applicationStateDir(FileUtils::Application::Files).empty());
+    TEST_CHECK(FileUtils::sharedThemeConfigPath().empty());
   });
 }

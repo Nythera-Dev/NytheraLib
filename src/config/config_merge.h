@@ -42,6 +42,8 @@ namespace nythera::config {
   // Each file is loaded at most once; cycles are warned and skipped. The caller is
   // responsible for overlaying settings.toml afterwards (it is never include-expanded).
   [[nodiscard]] MergeResult mergeConfigWithIncludes(std::string_view configDir);
+  [[nodiscard]] MergeResult
+  mergeConfigWithIncludes(std::string_view configDir, std::span<const std::filesystem::path> baseFiles);
 
   struct StagedTomlFile;
 
@@ -56,5 +58,9 @@ namespace nythera::config {
   [[nodiscard]] SourcedMergeResult mergeConfigWithSources(std::string_view configDir);
   [[nodiscard]] SourcedMergeResult
   mergeConfigWithSources(std::string_view configDir, std::span<const StagedTomlFile> staged);
+  [[nodiscard]] SourcedMergeResult mergeConfigWithSources(
+      std::string_view configDir, std::span<const StagedTomlFile> staged,
+      std::span<const std::filesystem::path> baseFiles
+  );
 
 } // namespace nythera::config
