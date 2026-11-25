@@ -6,6 +6,8 @@ NytheraLib provides the shared C++23 infrastructure for Nythera Shell and Files.
 
 On Arch Linux, build the package from a checkout using `makepkg -si` in `packaging/arch`. Pacman tracks the installed package and the applications’ dependency on it.
 
+Local builds require CMake and the system header-only toml11 development package (4.4 or newer within v4) for comment-preserving configuration writes. toml++ remains the parser used by configuration loading, schema validation and StateStore.
+
 For coordinated development, use the repository `justfile`, which defaults to `debugoptimized` in `build-debug/` and installs into `$HOME/.local/opt/nythera-lib` (`libdir=lib`):
 
 ```sh

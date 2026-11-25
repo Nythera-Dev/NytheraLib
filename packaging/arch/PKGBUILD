@@ -9,7 +9,7 @@ license=(MIT Apache-2.0)
 depends=(cairo curl fontconfig freetype2 glib2 harfbuzz libgcc libglvnd libjxl
          librsvg libstdc++ libwebp libxkbcommon md4c nlohmann-json pango
          tomlplusplus wayland)
-makedepends=(meson ninja pkgconf stb wayland-protocols)
+makedepends=(cmake meson ninja pkgconf stb 'toml11>=4.4' wayland-protocols)
 provides=(libnythera_lib.so)
 
 build() {

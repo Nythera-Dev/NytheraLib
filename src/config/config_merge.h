@@ -1,10 +1,12 @@
 #pragma once
 
 #include "config/config_origins.h"
+#include "config/config_sources.h"
 #include "config/schema/diagnostics.h"
 #include "core/toml.h"
 
 #include <filesystem>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -40,5 +42,19 @@ namespace nythera::config {
   // Each file is loaded at most once; cycles are warned and skipped. The caller is
   // responsible for overlaying settings.toml afterwards (it is never include-expanded).
   [[nodiscard]] MergeResult mergeConfigWithIncludes(std::string_view configDir);
+
+  struct StagedTomlFile;
+
+  struct SourcedMergeResult {
+    MergeResult config;
+    ConfigSourceMap sources;
+    // Logical paths of discovered documents and include targets, including missing targets.
+    std::vector<std::filesystem::path> watchPaths;
+  };
+
+  // Same loader, retaining definitions for editing the input documents.
+  [[nodiscard]] SourcedMergeResult mergeConfigWithSources(std::string_view configDir);
+  [[nodiscard]] SourcedMergeResult
+  mergeConfigWithSources(std::string_view configDir, std::span<const StagedTomlFile> staged);
 
 } // namespace nythera::config

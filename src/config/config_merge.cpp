@@ -1,6 +1,7 @@
 #include "config/config_merge.h"
 
 #include "config/config_service.h"
+#include "config/toml_persistence.h"
 #include "core/log.h"
 #include "util/file_utils.h"
 
@@ -18,15 +19,20 @@ namespace nythera::config {
 
     // Sorted *.toml directly in `dir` (non-recursive). Mirrors the root-scan in
     // ConfigService so directory includes load in a stable, predictable order.
-    std::vector<std::filesystem::path> sortedTomlInDir(const std::filesystem::path& dir) {
+    std::vector<std::filesystem::path>
+    sortedTomlInDir(const std::filesystem::path& dir, std::vector<std::filesystem::path>* watchPaths) {
       std::vector<std::filesystem::path> files;
       std::error_code ec;
       if (!std::filesystem::is_directory(dir, ec) || ec) {
         return files;
       }
       for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".toml") {
+        if (entry.path().extension() != ".toml")
+          continue;
+        if (entry.is_regular_file()) {
           files.push_back(entry.path());
+        } else if (watchPaths && entry.is_symlink()) {
+          watchPaths->push_back(entry.path());
         }
       }
       std::ranges::sort(files);
@@ -38,6 +44,90 @@ namespace nythera::config {
       auto key = std::filesystem::weakly_canonical(path, ec);
       return ec ? path.lexically_normal() : key;
     }
+
+    struct LoadInputs {
+      std::span<const StagedTomlFile> staged;
+      std::vector<std::filesystem::path>* watchPaths = nullptr;
+
+      void watch(const std::filesystem::path& path) const {
+        if (watchPaths) {
+          watchPaths->push_back(path);
+        }
+      }
+
+      const StagedTomlFile* replacement(const std::filesystem::path& path) const {
+        if (staged.empty()) {
+          return nullptr;
+        }
+        const auto key = canonicalKey(path);
+        for (const auto& file : staged) {
+          if (file.path == key
+              || std::ranges::any_of(file.aliases, [&](const auto& alias) { return canonicalKey(alias) == key; })) {
+            return &file;
+          }
+        }
+        return nullptr;
+      }
+
+      std::filesystem::path canonicalFile(const std::filesystem::path& path) const {
+        if (const auto* file = replacement(path)) {
+          return file->path;
+        }
+        return canonicalKey(path);
+      }
+
+      toml::table parse(const std::filesystem::path& path) const {
+        if (const auto* file = replacement(path)) {
+          return toml::parse(file->content, path.string());
+        }
+        return toml::parse_file(path.string());
+      }
+
+      std::vector<std::filesystem::path> scan(const std::filesystem::path& dir) const {
+        auto documents = sortedTomlInDir(dir, watchPaths);
+        if (staged.empty()) {
+          return documents;
+        }
+        const auto canonicalDir = canonicalKey(dir);
+        const auto append = [&](const auto& path) {
+          if (path.extension() == ".toml" && canonicalKey(path.parent_path()) == canonicalDir) {
+            documents.push_back(dir / path.filename());
+          }
+        };
+        for (const auto& file : staged) {
+          append(file.path);
+          for (const auto& alias : file.aliases) {
+            append(alias);
+          }
+        }
+        std::ranges::sort(documents);
+        documents.erase(std::unique(documents.begin(), documents.end()), documents.end());
+        return documents;
+      }
+
+      void validateInclude(const std::filesystem::path& path, const toml::table& table, MergeResult& out) const {
+        if (!watchPaths || !out.firstError.empty()) {
+          return;
+        }
+        const auto* node = table.get("include");
+        if (!node) {
+          return;
+        }
+        if (const auto* include = node->as_table()) {
+          const auto* autoload = include->get("autoload");
+          const auto* files = include->get("files");
+          if ((!autoload || autoload->is_boolean())
+              && (!files
+                  || (files->is_array()
+                      && (files->as_array()->empty() || files->as_array()->is_homogeneous(toml::node_type::string))))) {
+            return;
+          }
+        }
+        const auto& pos = node->source().begin;
+        out.firstErrorOrigin = {path.string(), pos.line, pos.column};
+        out.firstError = "expected [include] with a Boolean autoload and an array of file names";
+      }
+    };
 
     struct IncludeEntry {
       std::string value;
@@ -75,17 +165,30 @@ namespace nythera::config {
 
     // Forward declaration: parse `path`, then expand it (mutual recursion with the
     // include loop below).
-    toml::table
-    loadAndExpand(const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out);
+    toml::table loadAndExpand(
+        const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out,
+        ConfigSourceMap* sources, const LoadInputs& inputs
+    );
+
+    void mergeIncluded(
+        const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out,
+        toml::table& base, ConfigSourceMap* sources, const LoadInputs& inputs
+    ) {
+      ConfigSourceMap included;
+      ConfigService::deepMerge(base, loadAndExpand(path, visited, out, sources ? &included : nullptr, inputs));
+      if (sources) {
+        sources->overlay(included);
+      }
+    }
 
     // Expands an already-parsed file: merges its includes first, then overlays the
     // file's own body (minus [include]) so the host file wins. Returns the merged
     // subtree contributed by this file.
     toml::table expandFile(
         const std::filesystem::path& path, const toml::table& parsed, std::set<std::filesystem::path>& visited,
-        MergeResult& out
+        MergeResult& out, ConfigSourceMap* sources, const LoadInputs& inputs
     ) {
-      const auto key = canonicalKey(path);
+      const auto key = inputs.canonicalFile(path);
       if (visited.contains(key)) {
         kLog.warn("config include cycle or duplicate skipped: {}", key.string());
         return toml::table{};
@@ -94,6 +197,7 @@ namespace nythera::config {
       out.loadedFiles.push_back(key);
 
       const std::string includingDir = path.parent_path().string();
+      inputs.validateInclude(path, parsed, out);
       const IncludeDirective directive = readInclude(path, parsed);
 
       toml::table base;
@@ -101,14 +205,15 @@ namespace nythera::config {
         const std::string expanded = FileUtils::expandEnvVars(entry.value);
         const std::filesystem::path target = FileUtils::resolvePath(expanded, includingDir);
 
+        inputs.watch(target);
         std::error_code ec;
         if (std::filesystem::is_directory(target, ec) && !ec) {
           out.includeDirs.push_back(canonicalKey(target));
-          for (const auto& child : sortedTomlInDir(target)) {
-            ConfigService::deepMerge(base, loadAndExpand(child, visited, out));
+          for (const auto& child : inputs.scan(target)) {
+            mergeIncluded(child, visited, out, base, sources, inputs);
           }
-        } else if (std::filesystem::is_regular_file(target, ec) && !ec) {
-          ConfigService::deepMerge(base, loadAndExpand(target, visited, out));
+        } else if ((std::filesystem::is_regular_file(target, ec) && !ec) || inputs.replacement(target)) {
+          mergeIncluded(target, visited, out, base, sources, inputs);
         } else {
           if (out.firstError.empty()) {
             out.firstError = std::format("include not found: {}", entry.value);
@@ -120,6 +225,9 @@ namespace nythera::config {
 
       // Recorded after the includes so the host file's keys win here too.
       out.origins.record(path, parsed);
+      if (sources) {
+        sources->record(path, parsed);
+      }
 
       // Host wins: the file's own body overlays the includes it pulled in.
       toml::table body = parsed;
@@ -128,11 +236,14 @@ namespace nythera::config {
       return base;
     }
 
-    toml::table
-    loadAndExpand(const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out) {
+    toml::table loadAndExpand(
+        const std::filesystem::path& path, std::set<std::filesystem::path>& visited, MergeResult& out,
+        ConfigSourceMap* sources, const LoadInputs& inputs
+    ) {
+      inputs.watch(path);
       toml::table parsed;
       try {
-        parsed = toml::parse_file(path.string());
+        parsed = inputs.parse(path);
       } catch (const toml::parse_error& e) {
         if (out.firstError.empty()) {
           out.firstError = std::string(e.description());
@@ -141,54 +252,74 @@ namespace nythera::config {
         kLog.warn("parse error in {}: {}", path.string(), e.description());
         return toml::table{};
       }
-      return expandFile(path, parsed, visited, out);
+      return expandFile(path, parsed, visited, out, sources, inputs);
+    }
+
+    void mergeConfig(std::string_view configDir, MergeResult& out, ConfigSourceMap* sources, const LoadInputs& inputs) {
+      if (configDir.empty()) {
+        return;
+      }
+
+      // Phase A — parse every root file, noting any [include].autoload = false.
+      struct Root {
+        std::filesystem::path path;
+        toml::table table;
+        bool optOut = false;
+      };
+      std::vector<Root> roots;
+      bool anyOptOut = false;
+      for (const auto& path : inputs.scan(std::filesystem::path(configDir))) {
+        inputs.watch(path);
+        toml::table tbl;
+        try {
+          tbl = inputs.parse(path);
+        } catch (const toml::parse_error& e) {
+          if (out.firstError.empty()) {
+            out.firstError = std::string(e.description());
+            out.firstErrorOrigin = parseErrorOrigin(e, path);
+          }
+          kLog.warn("parse error in {}: {}", path.string(), e.description());
+          continue;
+        }
+        const IncludeDirective directive = readInclude(path, tbl);
+        const bool optOut = directive.hasAutoload && !directive.autoload;
+        anyOptOut = anyOptOut || optOut;
+        roots.push_back(Root{.path = path, .table = std::move(tbl), .optOut = optOut});
+      }
+
+      // Phase B — merge the load set. When any root opts out, only the opting-out
+      // roots (and their recursive includes) are loaded; other roots are skipped.
+      std::set<std::filesystem::path> visited;
+      for (const auto& root : roots) {
+        if (anyOptOut && !root.optOut) {
+          continue;
+        }
+        ConfigSourceMap rootSources;
+        ConfigService::deepMerge(
+            out.merged, expandFile(root.path, root.table, visited, out, sources ? &rootSources : nullptr, inputs)
+        );
+        if (sources) {
+          sources->overlay(rootSources);
+        }
+      }
     }
 
   } // namespace
 
   MergeResult mergeConfigWithIncludes(std::string_view configDir) {
-    MergeResult out;
-    if (configDir.empty()) {
-      return out;
-    }
+    MergeResult result;
+    mergeConfig(configDir, result, nullptr, {});
+    return result;
+  }
 
-    // Phase A — parse every root file, noting any [include].autoload = false.
-    struct Root {
-      std::filesystem::path path;
-      toml::table table;
-      bool optOut = false;
-    };
-    std::vector<Root> roots;
-    bool anyOptOut = false;
-    for (const auto& path : sortedTomlInDir(std::filesystem::path(configDir))) {
-      toml::table tbl;
-      try {
-        tbl = toml::parse_file(path.string());
-      } catch (const toml::parse_error& e) {
-        if (out.firstError.empty()) {
-          out.firstError = std::string(e.description());
-          out.firstErrorOrigin = parseErrorOrigin(e, path);
-        }
-        kLog.warn("parse error in {}: {}", path.string(), e.description());
-        continue;
-      }
-      const IncludeDirective directive = readInclude(path, tbl);
-      const bool optOut = directive.hasAutoload && !directive.autoload;
-      anyOptOut = anyOptOut || optOut;
-      roots.push_back(Root{.path = path, .table = std::move(tbl), .optOut = optOut});
-    }
+  SourcedMergeResult mergeConfigWithSources(std::string_view configDir) {
+    return mergeConfigWithSources(configDir, {});
+  }
 
-    // Phase B — merge the load set. When any root opts out, only the opting-out
-    // roots (and their recursive includes) are loaded; other roots are skipped.
-    std::set<std::filesystem::path> visited;
-    for (const auto& root : roots) {
-      if (anyOptOut && !root.optOut) {
-        continue;
-      }
-      ConfigService::deepMerge(out.merged, expandFile(root.path, root.table, visited, out));
-    }
-
-    return out;
+  SourcedMergeResult mergeConfigWithSources(std::string_view configDir, std::span<const StagedTomlFile> staged) {
+    SourcedMergeResult result;
+    mergeConfig(configDir, result.config, &result.sources, {staged, &result.watchPaths});
+    return result;
   }
 
 } // namespace nythera::config

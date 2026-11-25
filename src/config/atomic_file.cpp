@@ -1,6 +1,7 @@
 #include "config/atomic_file.h"
 
 #include <cerrno>
+#include <cstdlib>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <system_error>
@@ -94,35 +95,44 @@ bool writeTextFileAtomic(
     }
   }
 
-  const std::filesystem::path tmpPath = target->path.string() + ".tmp";
-  int fd = ::open(tmpPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, mode.has_value() ? toMode(*mode) : 0666);
+  auto tempDir = (parent / ".nythera-write-XXXXXX").string();
+  if (::mkdtemp(tempDir.data()) == nullptr) {
+    return false;
+  }
+
+  const std::filesystem::path tmpPath = std::filesystem::path(tempDir) / "content";
+  const auto cleanup = [&] {
+    // Remove only this call's private temporary file and directory.
+    std::error_code ignored;
+    std::filesystem::remove(tmpPath, ignored);
+    std::filesystem::remove(tempDir, ignored);
+  };
+  int fd = ::open(tmpPath.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, mode.has_value() ? toMode(*mode) : 0666);
   if (fd < 0) {
+    cleanup();
     return false;
   }
 
   if (mode.has_value() && ::fchmod(fd, toMode(*mode)) != 0) {
     closeFd(fd);
-    std::filesystem::remove(tmpPath, ec);
+    cleanup();
     return false;
   }
 
   if (!writeAll(fd, content)) {
     closeFd(fd);
-    std::filesystem::remove(tmpPath, ec);
+    cleanup();
     return false;
   }
 
   if (::close(fd) != 0) {
     fd = -1;
-    std::filesystem::remove(tmpPath, ec);
+    cleanup();
     return false;
   }
   fd = -1;
 
   std::filesystem::rename(tmpPath, target->path, ec);
-  if (ec) {
-    std::filesystem::remove(tmpPath, ec);
-    return false;
-  }
-  return true;
+  cleanup();
+  return !ec;
 }

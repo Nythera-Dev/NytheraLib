@@ -527,7 +527,8 @@ void FileDialogView::onOpen(std::string_view /*context*/) {
   }
   if (m_filenameInput != nullptr) {
     m_filenameInput->setValue(m_options.defaultFilename);
-    const bool showFilename = m_options.mode != FileDialogMode::SelectFolder;
+    const bool showFilename =
+        m_options.mode != FileDialogMode::SelectFolder && m_options.mode != FileDialogMode::SelectFileOrFolder;
     m_filenameInput->setVisible(showFilename);
     m_filenameInput->inputArea()->setEnabled(m_options.mode == FileDialogMode::Save);
     m_filenameInput->inputArea()->setFocusable(m_options.mode == FileDialogMode::Save);
@@ -675,7 +676,7 @@ bool FileDialogView::handleGlobalKey(
   if (m_visibleEntries.empty()) {
     if (!repeat
         && KeybindMatcher::matches(KeybindAction::Validate, sym, modifiers)
-        && m_options.mode == FileDialogMode::SelectFolder) {
+        && (m_options.mode == FileDialogMode::SelectFolder || m_options.mode == FileDialogMode::SelectFileOrFolder)) {
       submitDialog();
       return true;
     }
@@ -755,11 +756,15 @@ bool FileDialogView::handleGlobalKey(
     moveSelection(m_viewMode == ViewMode::Grid ? static_cast<int>(m_gridColumns) : 1);
     return true;
   }
-  if (!textInputFocused && m_viewMode == ViewMode::Grid && KeybindMatcher::matches(KeybindAction::Left, sym, modifiers)) {
+  if (!textInputFocused
+      && m_viewMode == ViewMode::Grid
+      && KeybindMatcher::matches(KeybindAction::Left, sym, modifiers)) {
     moveSelection(-1);
     return true;
   }
-  if (!textInputFocused && m_viewMode == ViewMode::Grid && KeybindMatcher::matches(KeybindAction::Right, sym, modifiers)) {
+  if (!textInputFocused
+      && m_viewMode == ViewMode::Grid
+      && KeybindMatcher::matches(KeybindAction::Right, sym, modifiers)) {
     moveSelection(1);
     return true;
   }
@@ -968,6 +973,9 @@ void FileDialogView::updateControls() {
   case FileDialogMode::SelectFolder:
     okText = i18n::tr("ui.dialogs.file.actions.select-folder");
     break;
+  case FileDialogMode::SelectFileOrFolder:
+    okText = i18n::tr("ui.dialogs.file.actions.select-item");
+    break;
   }
 
   if (m_okButton != nullptr) {
@@ -977,6 +985,8 @@ void FileDialogView::updateControls() {
       enabled = m_selectedIndex < m_visibleEntries.size() && !m_visibleEntries[m_selectedIndex].isDir;
     } else if (m_options.mode == FileDialogMode::Save) {
       enabled = m_filenameInput != nullptr && !m_filenameInput->value().empty();
+    } else if (m_options.mode == FileDialogMode::SelectFileOrFolder) {
+      enabled = !m_currentDirectory.empty();
     } else {
       enabled = true;
     }
@@ -1032,7 +1042,9 @@ void FileDialogView::setShowHiddenFiles(bool show) {
 }
 
 void FileDialogView::updateFilenameFieldFromSelection() {
-  if (m_filenameInput == nullptr || m_options.mode == FileDialogMode::SelectFolder) {
+  if (m_filenameInput == nullptr
+      || m_options.mode == FileDialogMode::SelectFolder
+      || m_options.mode == FileDialogMode::SelectFileOrFolder) {
     return;
   }
 
@@ -1120,7 +1132,7 @@ void FileDialogView::handleEntryClick(std::size_t index) {
 
   const FileEntry& entry = m_visibleEntries[index];
   if (entry.isDir) {
-    if (m_options.mode == FileDialogMode::SelectFolder) {
+    if (m_options.mode == FileDialogMode::SelectFolder || m_options.mode == FileDialogMode::SelectFileOrFolder) {
       if (m_selectedIndex == index) {
         navigateInto(entry.absPath);
       } else {
@@ -1149,8 +1161,10 @@ void FileDialogView::handleEntryClick(std::size_t index) {
 }
 
 void FileDialogView::activateSelection() {
+  const bool selectFolderOrItem =
+      m_options.mode == FileDialogMode::SelectFolder || m_options.mode == FileDialogMode::SelectFileOrFolder;
   if (m_selectedIndex >= m_visibleEntries.size()) {
-    if (m_options.mode == FileDialogMode::SelectFolder) {
+    if (selectFolderOrItem) {
       submitDialog();
     }
     return;
@@ -1158,7 +1172,7 @@ void FileDialogView::activateSelection() {
 
   const FileEntry& entry = m_visibleEntries[m_selectedIndex];
   if (entry.isDir) {
-    if (m_options.mode == FileDialogMode::SelectFolder) {
+    if (selectFolderOrItem) {
       submitDialog();
     } else {
       navigateInto(entry.absPath);
@@ -1186,6 +1200,15 @@ void FileDialogView::submitDialog() {
       return;
     }
     acceptDialog(m_currentDirectory / m_filenameInput->value());
+    return;
+  }
+
+  if (m_options.mode == FileDialogMode::SelectFileOrFolder) {
+    if (m_selectedIndex < m_visibleEntries.size()) {
+      acceptDialog(m_visibleEntries[m_selectedIndex].absPath);
+    } else if (!m_currentDirectory.empty()) {
+      acceptDialog(m_currentDirectory);
+    }
     return;
   }
 

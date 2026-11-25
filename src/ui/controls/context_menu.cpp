@@ -121,9 +121,12 @@ void ContextMenuControl::setContentScale(float scale) {
 }
 
 void ContextMenuControl::setSubmenuDirection(ContextSubmenuDirection direction) {
+  if (m_submenuDirection == direction)
+    return;
   m_submenuDirection = direction;
-  m_needsRebuild = true;
-  markLayoutDirty();
+  // A submenu can be configured while a pointer press holds a row.
+  // Update its chevrons in place so that release still reaches that row.
+  applyHighlightVisuals();
 }
 
 void ContextMenuControl::setOnActivate(std::function<void(const ContextMenuControlEntry&)> onActivate) {
@@ -681,9 +684,9 @@ void ContextMenuControl::rebuildRows(Renderer& renderer) {
         .interactive = interactive,
     };
     if (rowBgPtr != nullptr && labelPtr != nullptr) {
-      visual.apply = [rowBgPtr, labelPtr, togglePtr, toggleMarkerPtr, chevronPtr, shortcutPtr, applicationIcon,
-                      interactive, separator,
-                      header = entry.header, toggleState = entry.toggleState](bool highlighted) {
+      visual.apply = [this, rowBgPtr, labelPtr, togglePtr, toggleMarkerPtr, chevronPtr, shortcutPtr, applicationIcon,
+                      interactive, separator, splitSubmenu = entry.splitSubmenu, header = entry.header,
+                      toggleState = entry.toggleState](bool highlighted) {
         rowBgPtr->setFill(highlighted ? colorSpecFromRole(ColorRole::Hover) : clearColorSpec());
         if (separator || header) {
           labelPtr->setColor(colorSpecFromRole(ColorRole::OnSurfaceVariant));
@@ -705,6 +708,9 @@ void ContextMenuControl::rebuildRows(Renderer& renderer) {
           );
         }
         if (chevronPtr != nullptr) {
+          (void)chevronPtr->setGlyph(
+              splitSubmenu || m_submenuDirection == ContextSubmenuDirection::Right ? "chevron-right" : "chevron-left"
+          );
           chevronPtr->setColor(
               highlighted ? colorSpecFromRole(ColorRole::OnHover)
                           : (interactive ? enabledItemColor() : disabledItemColor())

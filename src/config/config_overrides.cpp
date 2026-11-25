@@ -1018,7 +1018,7 @@ const WallpaperFavorite* ConfigService::wallpaperFavorite(std::string_view path)
 }
 
 bool ConfigService::writeOverridesToFile(const OverrideDiagnostics& known) {
-  if (m_overridesPath.empty()) {
+  if (m_overridesPath.empty() || m_settingsAccess == SettingsAccess::InheritanceOnly) {
     m_overridesTable = m_persistedOverridesTable;
     return false;
   }

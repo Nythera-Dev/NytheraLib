@@ -10,12 +10,14 @@ class WaylandConnection;
 struct wl_output;
 struct wl_surface;
 struct xdg_surface;
+struct xdg_toplevel;
 struct zwlr_layer_surface_v1;
 
 struct LayerPopupParentContext {
   wl_surface* surface = nullptr;
   zwlr_layer_surface_v1* layerSurface = nullptr;
   xdg_surface* xdgSurface = nullptr;
+  xdg_toplevel* xdgToplevel = nullptr;
   wl_output* output = nullptr;
   std::uint32_t width = 0;
   std::uint32_t height = 0;

@@ -11,6 +11,7 @@ enum class FileDialogMode : std::uint8_t {
   Open,
   Save,
   SelectFolder,
+  SelectFileOrFolder,
 };
 
 enum class FileDialogViewMode : std::uint8_t {

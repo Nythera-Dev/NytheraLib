@@ -230,6 +230,31 @@ int main(int argc, char** argv) {
   menu.setHighlightedIndex(ContextMenuControl::NoHighlight);
   assert(menu.moveHighlight(-1) && menu.highlightedIndex() == 3);
 
+  // An asynchronously configured submenu can flip direction while a
+  // stationary pointer is pressing a different row in the same menu.
+  {
+    ContextMenuControl viewMenu;
+    viewMenu.setMenuWidth(240.0F);
+    viewMenu.setEntries(
+        {{.id = 100, .label = "Sort By", .submenuEntries = {{.label = "Name"}}},
+         {.id = 50, .label = "Show Hidden Files", .checkmark = true, .toggleState = 0}}
+    );
+    viewMenu.layout(renderer);
+    int activated = 0;
+    viewMenu.setOnActivate([&](const auto& entry) { activated = entry.id; });
+    InputDispatcher pointer;
+    pointer.setSceneRoot(&viewMenu);
+    const float rowY = (viewMenu.rowTop(1) + viewMenu.rowBottom(1)) * 0.5F;
+    assert(pointer.pointerButton(60, rowY, BTN_LEFT, true, 1, 1, false));
+    viewMenu.setSubmenuDirection(ContextSubmenuDirection::Left);
+    viewMenu.layout(renderer);
+    const auto& chevron = *viewMenu.children().front()->children().back();
+    const auto* arrow = dynamic_cast<const GlyphNode*>(chevron.children().front().get());
+    assert(arrow != nullptr && arrow->codepoint() == GlyphRegistry::lookup("chevron-left"));
+    (void)pointer.pointerButton(60, rowY, BTN_LEFT, false, 2, 2, false);
+    assert(activated == 50);
+  }
+
   renderer.actionGlyphAvailable = true;
   ContextMenuControl splitMenu;
   splitMenu.setMenuWidth(200.0F);
@@ -326,5 +351,41 @@ int main(int argc, char** argv) {
     assert(tile.isCut());
     tile.clear(renderer);
     assert(!tile.isCut());
+  }
+
+  // Default 3-column mode (without setColumns, as used in FileDialogView):
+  // the Name cell must grow to fill available space while keeping Size and Date
+  // columns identically aligned across short, medium, and long filenames.
+  {
+    FileEntryRow row(1.0F);
+    auto& flex = *dynamic_cast<Flex*>(row.children()[1].get());
+    auto* nameCell = flex.children()[0].get();
+    auto* sizeCell = flex.children()[1].get();
+    auto* dateCell = flex.children()[2].get();
+    constexpr float kRowWidth = 760.0F;
+    float expectedSizeX = -1.0F;
+    float expectedDateX = -1.0F;
+    const std::array names{std::string("a"), std::string("medium_name.txt"), std::string(120, 'w') + ".tar.gz"};
+    for (const bool isDir : {false, true}) {
+      for (const auto& name : names) {
+        const FileEntry entry{
+            .name = name,
+            .absPath = "/nonexistent-nythera-layout-fixture/" + name,
+            .isDir = isDir,
+            .size = 2048,
+        };
+        row.bind(renderer, entry, 0, kRowWidth, false, false, false);
+        if (expectedSizeX < 0.0F) {
+          expectedSizeX = sizeCell->x();
+          expectedDateX = dateCell->x();
+        } else {
+          near(sizeCell->x(), expectedSizeX);
+          near(dateCell->x(), expectedDateX);
+        }
+        near(sizeCell->width(), 96.0F);
+        near(dateCell->width(), 152.0F);
+        assert(nameCell->x() + nameCell->width() <= sizeCell->x());
+      }
+    }
   }
 }

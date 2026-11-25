@@ -1,5 +1,4 @@
 #include "ui/dialogs/file_entry_row.h"
-#include "ui/dialogs/file_entry_appearance.h"
 
 #include "core/files/directory_scanner.h"
 #include "core/files/display_text.h"
@@ -12,6 +11,7 @@
 #include "ui/builders.h"
 #include "ui/controls/image.h"
 #include "ui/controls/input.h"
+#include "ui/dialogs/file_entry_appearance.h"
 #include "ui/dialogs/file_icon.h"
 #include "ui/palette.h"
 #include "ui/style.h"
@@ -112,6 +112,7 @@ FileEntryRow::FileEntryRow(float scale, float iconSize, ThumbnailService* thumbn
   }
 
   auto* nameCell = m_cells[columnIndex(FileColumn::Name)];
+  nameCell->setFlexGrow(1.0F);
   nameCell->setGap(Style::spaceSm * scale);
   auto icon = std::make_unique<FileIcon>();
   icon->setGlyphSize(m_iconSize);
@@ -187,6 +188,7 @@ void FileEntryRow::setColumns(std::span<const FileColumn> columns, const fileman
   for (auto column : columns) {
     auto* cell = m_cells[columnIndex(column)];
     const float width = widths[column] * m_scale;
+    cell->setFlexGrow(0.0F);
     cell->setMinWidth(width);
     cell->setMaxWidth(width);
     if ((orderChanged || !m_columnsConfigured) && column != FileColumn::Name) {
@@ -334,7 +336,10 @@ void FileEntryRow::clear() {
 }
 
 void FileEntryRow::setVisualState(bool selected, bool hovered, bool disabled, bool cut, bool focused) {
-  if (m_selected == selected && m_hovered == hovered && m_disabled == disabled && m_cut == cut
+  if (m_selected == selected
+      && m_hovered == hovered
+      && m_disabled == disabled
+      && m_cut == cut
       && m_focused == focused) {
     return;
   }
@@ -366,7 +371,9 @@ void FileEntryRow::applyVisualState() {
   const float iconNameAlpha = filemanager::fileEntryIconNameAlpha(m_hidden, m_selected, m_hovered, m_disabled, m_cut);
 
   m_background->setFill(bg);
-  m_background->setBorder(m_focused ? focusRingColorSpec() : clearColorSpec(), m_focused ? Style::focusRingWidth : 0.0F);
+  m_background->setBorder(
+      m_focused ? focusRingColorSpec() : clearColorSpec(), m_focused ? Style::focusRingWidth : 0.0F
+  );
   m_icon->setColor(withAlpha(fg, iconNameAlpha));
   if (m_image)
     m_image->setOpacity(iconNameAlpha);

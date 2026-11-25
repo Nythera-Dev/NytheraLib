@@ -320,7 +320,8 @@
         "actions": {
           "open": "Open",
           "save": "Save",
-          "select-folder": "Select Folder"
+          "select-folder": "Select Folder",
+          "select-item": "Select"
         },
         "empty-filtered": "No files match the current filter",
         "entry": {
@@ -341,7 +342,8 @@
           "default": "File Dialog",
           "open": "Open File",
           "save": "Save File",
-          "select-folder": "Select Folder"
+          "select-folder": "Select Folder",
+          "select-item": "Select File or Folder"
         }
       },
       "glyph-picker": {

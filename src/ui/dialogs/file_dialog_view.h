@@ -11,6 +11,7 @@
 
 class AnimationManager;
 class Button;
+class FileDialogViewTestAccess;
 class FileGridAdapter;
 class FileListAdapter;
 class Flex;
@@ -64,6 +65,8 @@ public:
   [[nodiscard]] InputArea* initialFocusArea() const;
 
 private:
+  friend class FileDialogViewTestAccess;
+
   enum class ViewMode : std::uint8_t {
     List,
     Grid,

@@ -57,7 +57,8 @@ public:
   explicit ConfigService(MergedConfigValidator validator = {}, OverrideEffectivenessChecker effectiveness = {});
   // Read Shell settings and overrides without persisting migrations. App state
   // remains writable through the existing owner-scoped state API.
-  enum class SettingsAccess { ReadOnly, ReadWrite };
+  // InheritanceOnly also leaves the Shell StateStore unopened.
+  enum class SettingsAccess { ReadOnly, ReadWrite, InheritanceOnly };
   explicit ConfigService(SettingsAccess access);
   ~ConfigService() = default;
 

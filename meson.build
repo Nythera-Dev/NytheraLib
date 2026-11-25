@@ -112,6 +112,9 @@ curl_dep            = dependency('libcurl')
 md4c_dep            = dependency('md4c')
 nlohmann_dep        = dependency('nlohmann_json')
 tomlplusplus_dep    = dependency('tomlplusplus')
+toml11_dep = dependency('toml11', method: 'cmake', version: ['>=4.4', '<5'],
+  modules: ['toml11::toml11'], include_type: 'system',
+)
 dl_dep              = cpp.find_library('dl', required: false)
 
 egl_dep = dependency('egl', required: false)
@@ -295,6 +298,7 @@ _nythera_lib_sources = files(
   'src/config/config_origins.cpp',
   'src/config/config_overrides.cpp',
   'src/config/config_service.cpp',
+  'src/config/config_sources.cpp',
   'src/config/config_types.cpp',
   'src/config/widget_config.cpp',
   'src/config/schema/config_schema.cpp',
@@ -515,9 +519,21 @@ _nythera_cpp_args = [
 ] + _nythera_compile_definitions
 
 
+# Compile toml11 only into the editor. Keep its include flags and symbols
+# private to NytheraLib; public callers use ordinary paths and TOML text.
+toml_editor = static_library('nythera_toml_editor',
+  'src/config/toml_persistence.cpp',
+  dependencies: [toml11_dep, tomlplusplus_dep],
+  include_directories: include_directories('src'),
+  cpp_args: _nythera_cpp_args,
+  gnu_symbol_visibility: 'hidden',
+  pic: true,
+)
+
 nythera_lib = shared_library('nythera_lib',
   sources: _nythera_lib_sources + _protocol_sources + _protocol_headers,
   dependencies: _nythera_system_dependencies + [fzy_dep, mcu_dep],
+  link_whole: toml_editor,
   include_directories: [include_directories('src', '.')] + _wuffs_inc,
   cpp_args: _nythera_cpp_args,
   version: meson.project_version(),
@@ -617,6 +633,7 @@ install_headers(
 install_headers(
   'src/config/atomic_file.h',
   'src/config/color_spec.h',
+  'src/config/application_paths.h',
   'src/config/config_credentials.h',
   'src/config/config_export.h',
   'src/config/config_limits.h',
@@ -626,8 +643,10 @@ install_headers(
   'src/config/config_origins.h',
   'src/config/config_poll_source.h',
   'src/config/config_service.h',
+  'src/config/config_sources.h',
   'src/config/config_types.h',
   'src/config/state_store.h',
+  'src/config/toml_persistence.h',
   'src/config/widget_config.h',
   'src/config/widget_setting_value.h',
   subdir: 'nythera-lib/config',
@@ -1031,6 +1050,7 @@ if build_tests
 
   _cpp_test_names = [
     'animation_manager',
+    'application_paths',
     'button_layout',
     'cairo_glyph_renderer',
     'cairo_text_renderer',
@@ -1041,7 +1061,9 @@ if build_tests
     'cli_schema',
     'config_migration',
     'config_path_resolution',
+    'config_sources',
     'config_widget',
+    'file_dialog_mode',
     'file_entry_row_layout',
     'fixed_palette_json',
     'freedesktop_key_file',
@@ -1075,6 +1097,7 @@ if build_tests
     'theme_shell_mode',
     'thumbnail_service',
     'time_format',
+    'toml_persistence',
     'virtual_grid_view_gesture',
     'wayland_output_scale',
     'wayland_seat_keyboard',

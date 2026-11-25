@@ -347,7 +347,8 @@ ConfigService::ConfigService(
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
     m_overridesPath = dir + "/settings.toml";
-    m_stateStore.setPath(dir + "/state.toml");
+    if (access != SettingsAccess::InheritanceOnly)
+      m_stateStore.setPath(dir + "/state.toml");
     m_setupMarkerPath = dir + "/.setup-complete";
   }
 
@@ -1015,7 +1016,7 @@ void ConfigService::updateLegacyConfigIssues(nythera::config::LegacyConfigIssues
   }
   m_legacyConfigIssues = std::move(issues);
 
-  if (m_settingsAccess == SettingsAccess::ReadOnly) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite) {
     return;
   }
 

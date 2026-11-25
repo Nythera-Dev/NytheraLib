@@ -20,6 +20,8 @@ namespace {
       return i18n::tr("ui.dialogs.file.title.save");
     case FileDialogMode::SelectFolder:
       return i18n::tr("ui.dialogs.file.title.select-folder");
+    case FileDialogMode::SelectFileOrFolder:
+      return i18n::tr("ui.dialogs.file.title.select-item");
     }
     return i18n::tr("ui.dialogs.file.title.default");
   }

@@ -192,6 +192,12 @@ void ContextMenuPopup::open(ContextMenuPopupRequest request) {
 
     UiPhaseScope layoutPhase(UiPhase::Layout);
 
+    if (!needsSceneBuild) {
+      // Layout dirtiness alone does not invalidate the input targets.
+      self->m_sceneRoot->layout(self->m_surface->renderTarget().renderer());
+      return;
+    }
+
     const bool firstLayout = self->m_menu == nullptr;
     if (!firstLayout) {
       self->m_highlightedIndex = self->m_menu->highlightedIndex();
@@ -335,7 +341,7 @@ void ContextMenuPopup::open(ContextMenuPopupRequest request) {
         }
         if (self->m_menu != nullptr) {
           self->m_menu->setSubmenuDirection(self->m_submenuDirection);
-          self->m_surface->requestLayout();
+          self->requestVisualUpdate();
         }
       }
     };
