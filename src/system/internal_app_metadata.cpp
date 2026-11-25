@@ -52,7 +52,7 @@ namespace internal_apps {
   [[nodiscard]] AppMetadata metadataFromDefinition(const InternalAppDefinition& app) {
     return AppMetadata{
         .displayName = std::string(app.displayName),
-        .iconPath = paths::assetPath(app.iconAssetPath).string(),
+        .iconPath = paths::sharedAssetPath(app.iconAssetPath).string(),
     };
   }
 

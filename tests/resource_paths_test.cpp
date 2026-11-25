@@ -239,5 +239,19 @@ int main() {
           == libOverride
       );
     }
+
+    // 4. Runtime shared visual identity and palette assets resolve as regular files in NytheraLib's bundle.
+    for (const char* relativeAsset : {
+             "nythera-logo.svg",
+             "nythera-logo.png",
+             "nythera-logo-flat.svg",
+             "nythera-header-accent.svg",
+             "nythera-glyph-vector.svg",
+             "nythera-glyph-simple-vector.svg",
+             "palettes/Scarlet-Protocol.json",
+             "palettes/Umbriel-Redline.json",
+         }) {
+      TEST_CHECK(std::filesystem::is_regular_file(paths::sharedAssetPath(relativeAsset)));
+    }
   });
 }
