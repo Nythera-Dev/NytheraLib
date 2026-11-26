@@ -32,6 +32,15 @@ namespace filemanager {
     return trailing ? 12.0F : 12.0F - gap * 0.5F;
   }
 
+  inline constexpr float kMetadataFontSizeIncrease = 2.0F;
+
+  inline constexpr bool fileColumnUsesTabularNumerals(FileColumn column, bool searchView) noexcept {
+    return column == FileColumn::Size
+        || column == FileColumn::Modified
+        || column == FileColumn::Accessed
+        || (column == FileColumn::Created && !searchView);
+  }
+
   inline constexpr std::size_t columnIndex(FileColumn column) noexcept { return static_cast<std::size_t>(column); }
 
   // Logical pixels, keyed by identity so moving or hiding a column retains its width.

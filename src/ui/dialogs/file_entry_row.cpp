@@ -11,6 +11,7 @@
 #include "ui/builders.h"
 #include "ui/controls/image.h"
 #include "ui/controls/input.h"
+#include "ui/controls/label.h"
 #include "ui/dialogs/file_entry_appearance.h"
 #include "ui/dialogs/file_icon.h"
 #include "ui/palette.h"
@@ -174,6 +175,17 @@ void FileEntryRow::setCallbacks(
 }
 
 void FileEntryRow::setColumns(std::span<const FileColumn> columns, const filemanager::FileColumns& widths) {
+  if (!m_columnsConfigured) {
+    const auto leftAlign = Style::rtl() ? TextAlign::End : TextAlign::Start;
+    m_name->setTextAlign(leftAlign);
+    for (const auto column : filemanager::kFileColumns) {
+      m_cells[columnIndex(column)]->setMirrorInRtl(false);
+      if (auto* label = m_columnLabels[columnIndex(column)]) {
+        label->setFontSize((Style::fontSizeCaption + filemanager::kMetadataFontSizeIncrease) * m_scale);
+        label->setTextAlign(leftAlign);
+      }
+    }
+  }
   const bool orderChanged = !std::ranges::equal(columns, m_columns);
   if (orderChanged) {
     m_columns.assign(columns.begin(), columns.end());
@@ -194,7 +206,7 @@ void FileEntryRow::setColumns(std::span<const FileColumn> columns, const fileman
     cell->setMaxWidth(width);
     if ((orderChanged || !m_columnsConfigured) && column != FileColumn::Name) {
       const float inset = filemanager::fileColumnTextInset(column == columns.back(), Style::spaceSm) * m_scale;
-      cell->setPadding(0.0F, Style::rtl() ? 0.0F : inset, 0.0F, Style::rtl() ? inset : 0.0F);
+      cell->setPadding(0.0F, 0.0F, 0.0F, inset);
     }
   }
   m_columnsConfigured = true;
@@ -280,8 +292,11 @@ void FileEntryRow::bind(
   m_name->setText(columnText(entry, FileColumn::Name, folderItems));
   m_hidden = filemanager::isHiddenFileName(entry.name);
   for (auto column : m_columns) {
-    if (column != FileColumn::Name)
-      m_columnLabels[columnIndex(column)]->setText(columnText(entry, column, folderItems, {}, m_columnsConfigured));
+    if (auto* label = m_columnLabels[columnIndex(column)]) {
+      if (m_columnsConfigured)
+        label->setFontFeatures(filemanager::fileColumnUsesTabularNumerals(column, false) ? "tnum" : "");
+      label->setText(columnText(entry, column, folderItems, {}, m_columnsConfigured));
+    }
   }
 
   applyVisualState();
@@ -368,8 +383,9 @@ void FileEntryRow::setSelectionRoles(ColorRole background, ColorRole foreground)
 
 void FileEntryRow::setSearchLocation(std::string_view location) {
   auto* label = m_columnLabels[columnIndex(filemanager::kSearchLocationSlot)];
-  label->setTextAlign(TextAlign::Start);
+  label->setTextAlign(m_columnsConfigured && Style::rtl() ? TextAlign::End : TextAlign::Start);
   label->setEllipsize(TextEllipsize::End);
+  label->setFontFeatures("");
   label->setText(location);
 }
 
