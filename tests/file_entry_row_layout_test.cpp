@@ -84,7 +84,54 @@ int main(int argc, char** argv) {
   assert(::setenv("NYTHERA_LIB_ASSETS_DIR", argv[1], 1) == 0);
   i18n::Service::instance().init("en");
   StubRenderer renderer;
+  {
+    FileEntryRow row(1.0F);
+    FileEntryTile tile(1.0F, nullptr);
+    const FileEntry entry{.name = "image.png", .absPath = "image.png"};
+    row.setAllowThumbnailsAndMetadata(false);
+    tile.setAllowThumbnailsAndMetadata(false);
+    row.bind(renderer, entry, 0, 200.0F, false, false, false);
+    tile.bind(renderer, entry, 0, 100.0F, 100.0F, false, false, false);
+    const TextureHandle thumb{.id = TextureId{1}, .width = 10, .height = 10};
+    row.showThumbnail(renderer, thumb);
+    tile.showThumbnail(renderer, thumb);
+    assert(!row.fileIcon()->visible() && !row.fileIcon()->allowFilesystemQueries());
+    assert(!tile.fileIcon()->visible() && !tile.fileIcon()->allowFilesystemQueries());
+    row.showThumbnail(renderer, {});
+    tile.showThumbnail(renderer, {});
+    assert(row.fileIcon()->visible() && tile.fileIcon()->visible());
+  }
   using filemanager::FileColumn;
+  {
+    const FileEntry entry{.name = "needle.txt", .absPath = "/scope/folder/needle.txt", .type = "text/plain"};
+    const auto metrics = filemanager::fileViewMetrics(1.0F);
+    FileEntryRow row(1.0F, metrics.listIcon);
+    row.setAllowThumbnailsAndMetadata(false);
+    const auto columns = filemanager::kDefaultSearchColumnLayout.displayed();
+    row.setColumns(columns, {});
+    row.bind(renderer, entry, 0, 800.0F, false, false, false);
+    row.setSearchLocation("folder");
+    row.layout(renderer);
+    const auto& cells = row.children()[1]->children();
+    const auto& name = dynamic_cast<const Label&>(*cells[cells.size() - columns.size()]->children()[2]);
+    const auto& location = dynamic_cast<const Label&>(*cells[cells.size() - columns.size() + 1]->children()[0]);
+    assert(name.text() == "needle.txt");
+    assert(location.text() == "folder" && location.textAlign() == TextAlign::Start);
+
+    FileEntryTile tile(1.0F, nullptr, metrics.gridIcon);
+    tile.setAllowThumbnailsAndMetadata(false);
+    tile.bind(renderer, entry, 0, metrics.gridCellWidth, metrics.gridCellHeight + 18.0F, false, false, false);
+    tile.setSearchLocation("folder");
+    tile.layout(renderer);
+    const auto& subtitle = dynamic_cast<const Label&>(*tile.children().back());
+    const auto filename = std::ranges::find_if(tile.children(), [](const auto& item) {
+      const auto* label = dynamic_cast<const Label*>(item.get());
+      return label && label->text() == "needle.txt";
+    });
+    assert(filename != tile.children().end());
+    assert(subtitle.text() == "folder" && subtitle.y() >= (*filename)->y() + (*filename)->height());
+    assert(subtitle.y() + subtitle.height() <= tile.height());
+  }
   assert(filemanager::clampFileViewScale(0.5F) == filemanager::kFileViewMinScale);
   assert(filemanager::clampFileViewScale(2.0F) == filemanager::kFileViewMaxScale);
   assert(filemanager::clampFileViewScale(1.000001F) == filemanager::kFileViewDefaultScale);

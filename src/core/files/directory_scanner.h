@@ -13,6 +13,7 @@ enum class FileDialogSortField : std::uint8_t {
   Created,
   Accessed,
   Type,
+  Location,
 };
 
 enum class FileDialogSortOrder : std::uint8_t {

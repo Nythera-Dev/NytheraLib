@@ -1,8 +1,11 @@
 #include "config/files_config_validator.h"
 
 #include "config/config_types.h"
+#include "core/files/directory_scanner.h"
 #include "filemanager/file_columns.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
@@ -16,7 +19,9 @@ namespace nythera::config {
     namespace fs = std::filesystem;
 
     bool validPreference(std::string_view key, const toml::node& node) {
-      if (key == "grid_view"
+      if (key == "search_grid_view"
+          || key == "search_sort_descending"
+          || key == "grid_view"
           || key == "show_hidden"
           || key == "folders_first"
           || key == "hidden_last"
@@ -24,27 +29,46 @@ namespace nythera::config {
           || key == "show_menu_bar"
           || key == "always_show_tab_bar"
           || key == "open_tabs_in_background"
-          || key == "readline_shortcuts") {
+          || key == "readline_shortcuts"
+          || key == "fzf_search") {
         return node.is_boolean();
+      }
+      if (key == "search_default_mode") {
+        constexpr std::array<std::string_view, 7> modes{"contiguous", "fuzzy", "starts_with", "ends_with",
+                                                        "exclude",    "exact", "none"};
+        const auto value = node.value_exact<std::string_view>();
+        return value && std::ranges::contains(modes, *value);
       }
       if (key == "sort_field" || key == "admin_inactivity_timeout_seconds") {
         const auto value = node.value_exact<std::int64_t>();
         return value && (key == "sort_field" ? *value >= 0 && *value <= 5 : *value >= 60 && *value <= 3600);
       }
-      if (key == "view_scale") {
+      if (key == "search_sort_field") {
+        constexpr std::array fields{
+            FileDialogSortField::Name, FileDialogSortField::Size, FileDialogSortField::Modified,
+            FileDialogSortField::Type, FileDialogSortField::Location
+        };
+        const auto value = node.value_exact<std::int64_t>();
+        return value && std::ranges::any_of(fields, [&](auto field) { return *value == static_cast<int>(field); });
+      }
+      if (key == "view_scale" || key == "search_view_scale") {
         const auto value = node.value<double>();
         return value
             && std::isfinite(*value)
             && *value >= static_cast<double>(0.8)
             && *value <= static_cast<double>(1.8);
       }
-      if (key == "list_column_widths" || key == "list_column_layout") {
+      const bool widthsKey = key == "list_column_widths" || key == "search_column_widths";
+      if (widthsKey || key == "list_column_layout" || key == "search_column_layout") {
         const auto text = node.value_exact<std::string_view>();
         filemanager::FileColumns widths;
         filemanager::FileColumnLayout layout;
-        return text
-            && (key == "list_column_widths" ? filemanager::parseFileColumns(*text, widths)
-                                            : filemanager::parseFileColumnLayout(*text, layout));
+        if (!text)
+          return false;
+        if (widthsKey)
+          return filemanager::parseFileColumns(*text, widths);
+        return key == "search_column_layout" ? filemanager::parseSearchFileColumnLayout(*text, layout)
+                                             : filemanager::parseFileColumnLayout(*text, layout);
       }
       if (key == "place_order" || key == "hidden_mounts") {
         const auto* array = node.as_array();

@@ -53,6 +53,7 @@ public:
 
   void setText(std::string_view text);
   void setGlyph(std::string_view name);
+  void setTrailingGlyph(std::string_view name);
   void setLeadingIcon(std::unique_ptr<Node> icon, float width);
   void setFontSize(float size);
   void setGlyphSize(float size);
@@ -79,7 +80,10 @@ public:
   void setHoverSuppressed(bool suppressed);
   // Navigation rows have a separate active selection; pointer focus must not
   // leave a second row looking hovered after the pointer has moved away.
-  void setFocusHighlightEnabled(bool enabled) { m_focusHighlightEnabled = enabled; applyVisualState(); }
+  void setFocusHighlightEnabled(bool enabled) {
+    m_focusHighlightEnabled = enabled;
+    applyVisualState();
+  }
   void setHoveredVisual(bool hovered);
   void setPressedVisual(bool pressed);
   void setCursorShape(std::uint32_t shape);

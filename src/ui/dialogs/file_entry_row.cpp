@@ -149,18 +149,19 @@ void FileEntryRow::releaseThumbnail() {
 }
 
 void FileEntryRow::refreshThumbnail(Renderer& renderer) {
-  if (!m_thumbnailPath.empty() && m_thumbnails != nullptr) {
-    const auto handle = m_thumbnails->peek(m_thumbnailPath, 64, m_thumbnailDiskCache);
-    if (handle.id != 0) {
-      m_image->setExternalTexture(renderer, handle);
-      m_image->setVisible(true);
-      m_icon->setVisible(false);
-      return;
-    }
-  }
-  m_image->clear(renderer);
-  m_image->setVisible(false);
-  m_icon->setVisible(true);
+  const auto handle = m_thumbnails != nullptr && !m_thumbnailPath.empty()
+      ? m_thumbnails->peek(m_thumbnailPath, 64, m_thumbnailDiskCache)
+      : TextureHandle{};
+  showThumbnail(renderer, handle);
+}
+
+void FileEntryRow::showThumbnail(Renderer& renderer, TextureHandle handle) {
+  if (handle.id != 0)
+    m_image->setExternalTexture(renderer, handle);
+  else if (m_image->visible())
+    m_image->clear(renderer);
+  m_image->setVisible(handle.id != 0);
+  m_icon->setVisible(handle.id == 0);
 }
 
 void FileEntryRow::setCallbacks(
@@ -355,6 +356,13 @@ void FileEntryRow::setSelectionRoles(ColorRole background, ColorRole foreground)
   m_selectedBackgroundRole = background;
   m_selectedForegroundRole = foreground;
   applyVisualState();
+}
+
+void FileEntryRow::setSearchLocation(std::string_view location) {
+  auto* label = m_columnLabels[columnIndex(filemanager::kSearchLocationSlot)];
+  label->setTextAlign(TextAlign::Start);
+  label->setEllipsize(TextEllipsize::Start);
+  label->setText(location);
 }
 
 void FileEntryRow::applyVisualState() {

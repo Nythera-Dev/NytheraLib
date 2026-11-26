@@ -534,6 +534,21 @@ void Input::setClearButtonEnabled(bool enabled) {
   markLayoutDirty();
 }
 
+Label* Input::trailingLabel() const noexcept {
+  // The optional decoration is owned by the input hit area, outside the editable clip.
+  const auto& children = m_inputArea->children();
+  return children.empty() ? nullptr : dynamic_cast<Label*>(children.front().get());
+}
+
+void Input::setTrailingLabel(std::unique_ptr<Label> label) {
+  if (auto* previous = trailingLabel())
+    m_inputArea->removeChild(previous);
+  if (label) {
+    label->setClipChildren(true);
+    m_inputArea->insertChildAt(0, std::move(label));
+  }
+}
+
 void Input::setPasswordMode(bool enabled) {
   // Mutually exclusive with multiline; multiline wins.
   if (enabled && m_multiline) {
@@ -1048,15 +1063,13 @@ void Input::rebuildCursorStops(Renderer& renderer) {
   m_textMetricsDirty = false;
 }
 
-void Input::recomputeContentLeadSlack(Renderer& renderer, float width, bool showClearButton) {
+void Input::recomputeContentLeadSlack(Renderer& renderer) {
   m_contentLeadSlack = 0.0F;
   if (m_multiline || (m_textAlign != TextAlign::Center && !Style::rtl() && !valueLaidOutRtl())) {
     return;
   }
 
-  const float textInset = m_horizontalPadding + kTextInnerInset;
-  const float rightInset = showClearButton ? clearButtonTextReserveWidth() : textInset;
-  const float viewportWidth = std::max(0.0F, width - textInset - rightInset);
+  const float viewportWidth = textViewportWidth();
   float textExtent = 0.0F;
   const bool showPasswordGlyphs = passwordMasked() && !m_value.empty();
   if (showPasswordGlyphs) {
@@ -1163,6 +1176,21 @@ void Input::doLayout(Renderer& renderer) {
   setSize(w, h);
   const bool showClearButton = clearButtonVisible();
 
+  if (auto* trailing = trailingLabel(); trailing && trailing->visible()) {
+    const float inset = m_horizontalPadding + kTextInnerInset;
+    const float right = w - (showClearButton ? clearButtonHitWidth() : inset);
+    // Keep room for editing even when the control is narrow or the status is long.
+    const float budget = std::floor(std::max(0.0F, right - inset - Style::spaceSm) * 0.5F);
+    if (budget >= 1.0F) {
+      LayoutConstraints constraints;
+      constraints.setMaxWidth(budget);
+      const auto size = static_cast<Node&>(*trailing).measure(renderer, constraints);
+      trailing->arrange(renderer, {right - size.width, std::round((h - size.height) * 0.5F), size.width, size.height});
+    } else {
+      trailing->setSize(0.0F, 0.0F);
+    }
+  }
+
   const bool showPasswordGlyphs = passwordMasked() && !m_value.empty();
   m_label->setVisible(!showPasswordGlyphs);
 
@@ -1172,7 +1200,7 @@ void Input::doLayout(Renderer& renderer) {
     m_revealCursorYPending = true;
   }
   rebuildCursorStops(renderer);
-  recomputeContentLeadSlack(renderer, w, showClearButton);
+  recomputeContentLeadSlack(renderer);
 
   const bool focused = m_inputArea != nullptr && m_inputArea->focused();
   if (m_multiline) {
@@ -1234,10 +1262,8 @@ void Input::doLayout(Renderer& renderer) {
 
   if (m_textViewport != nullptr) {
     const float textInset = m_horizontalPadding + kTextInnerInset;
-    const float rightInset = showClearButton ? clearButtonTextReserveWidth() : textInset;
-    const float viewportW = std::max(0.0F, w - textInset - rightInset);
     m_textViewport->setPosition(textInset, 0.0F);
-    m_textViewport->setSize(viewportW, h);
+    m_textViewport->setSize(textViewportWidth(), h);
   }
 
   m_inputArea->setPosition(0.0F, 0.0F);
@@ -2436,7 +2462,10 @@ void Input::animatePasswordGlyphIn(GlyphNode& glyph) {
 float Input::textViewportWidth() const noexcept {
   const float w = width() > 0.0F ? width() : kMinWidth;
   const float textInset = m_horizontalPadding + kTextInnerInset;
-  const float rightInset = clearButtonVisible() ? clearButtonTextReserveWidth() : textInset;
+  const bool clear = clearButtonVisible();
+  float rightInset = clear ? clearButtonTextReserveWidth() : textInset;
+  if (const auto* trailing = trailingLabel(); trailing && trailing->visible() && trailing->width() > 0.0F)
+    rightInset = (clear ? clearButtonHitWidth() : textInset) + trailing->width() + Style::spaceSm;
   return std::max(0.0F, w - textInset - rightInset);
 }
 

@@ -2,6 +2,7 @@
 #include "render/core/renderer.h"
 #include "render/core/texture_manager.h"
 #include "render/scene/input_area.h"
+#include "render/scene/input_dispatcher.h"
 #include "render/scene/rect_node.h"
 #include "render/text/cairo_text_renderer.h"
 #include "test_check.h"
@@ -178,6 +179,47 @@ int main() {
     TEST_CHECK(std::abs(label.x()) < 0.5F);
     TEST_CHECK(pressKey(input, XKB_KEY_Left) == 4);
     TEST_CHECK(pressKey(input, XKB_KEY_Right) == 5);
+  }
+
+  // Trailing text lives outside the editable clip and never changes the field's geometry.
+  {
+    Input input;
+    const auto value = std::string(100, 'a');
+    const auto& query = layOut(renderer, input, value);
+    const auto& viewport = *query.parent();
+    const float fullWidth = input.width();
+    const float fullHeight = input.height();
+    const float fullViewport = viewport.width();
+    auto trailing = std::make_unique<Label>();
+    auto* status = trailing.get();
+    status->setText("Searching… 1,561 found");
+    status->setMaxLines(1);
+    status->setEllipsize(TextEllipsize::End);
+    input.setTrailingLabel(std::move(trailing));
+    InputDispatcher dispatcher;
+    dispatcher.setSceneRoot(&input);
+    dispatcher.setFocus(input.inputArea());
+
+    input.layout(renderer);
+    TEST_CHECK(input.width() == fullWidth && input.height() == fullHeight);
+    TEST_CHECK(viewport.clipChildren());
+    TEST_CHECK(status->width() > 0.0F && status->x() + status->width() < input.width());
+    TEST_CHECK(viewport.x() + viewport.width() < status->x());
+    TEST_CHECK(pressKey(input, XKB_KEY_End) == static_cast<std::int32_t>(value.size()));
+    TEST_CHECK(caretX(input) < status->x());
+    input.selectAll();
+    TEST_CHECK(input.hasTextSelection() && input.value() == value);
+
+    input.setSize(140.0F, fullHeight);
+    input.layout(renderer);
+    TEST_CHECK(viewport.width() > 0.0F && viewport.x() + viewport.width() < status->x());
+    TEST_CHECK(status->x() + status->width() < input.width());
+
+    input.setSize(fullWidth, fullHeight);
+    status->setVisible(false);
+    input.layout(renderer);
+    TEST_CHECK(viewport.width() == fullViewport);
+    dispatcher.setSceneRoot(nullptr);
   }
 
   // Pango lays Arabic out as an RTL paragraph even in an LTR UI. The label sits flush with the

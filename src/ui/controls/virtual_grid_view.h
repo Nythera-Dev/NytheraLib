@@ -1,8 +1,8 @@
 #pragma once
 
 #include "render/scene/node.h"
-#include "ui/tooltip/tooltip_content.h"
 #include "ui/controls/flex.h"
+#include "ui/tooltip/tooltip_content.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -133,6 +133,8 @@ public:
   }
   // Cancel transient hover, press, selection-animation, and pending scroll state before swapping data sources.
   void resetTransientStateForDataSwap();
+  // Visits bound tiles that intersect the viewport, excluding overscan. Call after layout.
+  void visitVisibleTiles(const std::function<void(Node&, std::size_t)>& visit) const;
 
   void setColumns(std::size_t columns); // 0 = auto from minCellWidth.
   void setMinCellWidth(float width);    // Used when columns == 0.

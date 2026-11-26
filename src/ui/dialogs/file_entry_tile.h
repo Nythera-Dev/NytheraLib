@@ -16,6 +16,7 @@ class Image;
 class Label;
 class Input;
 class Renderer;
+struct TextureHandle;
 class ThumbnailService;
 
 class FileEntryTile final : public InputArea {
@@ -39,6 +40,9 @@ public:
   void setVisualState(bool selected, bool hovered, bool disabled, bool cut = false, bool focused = false);
   [[nodiscard]] bool isCut() const noexcept { return m_cut; }
   void setSelectionRoles(ColorRole background, ColorRole foreground);
+  // Presents a caller-owned thumbnail independently of file artwork queries.
+  void setSearchLocation(std::string_view location);
+  void showThumbnail(Renderer& renderer, TextureHandle handle);
   void setAllowThumbnailsAndMetadata(bool allow) noexcept { m_allowThumbnailsAndMetadata = allow; }
   [[nodiscard]] bool allowThumbnailsAndMetadata() const noexcept { return m_allowThumbnailsAndMetadata; }
   [[nodiscard]] FileIcon* fileIcon() const noexcept { return m_glyph; }
@@ -51,6 +55,7 @@ public:
 private:
   void doLayout(Renderer& renderer) override;
   void applyVisualState();
+  [[nodiscard]] Label* searchLocationLabel() const;
   void releaseThumbnail();
 
   float m_scale = 1.0F;

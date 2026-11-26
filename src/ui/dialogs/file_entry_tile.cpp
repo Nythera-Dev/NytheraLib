@@ -1,5 +1,4 @@
 #include "ui/dialogs/file_entry_tile.h"
-#include "ui/dialogs/file_entry_appearance.h"
 
 #include "core/files/directory_scanner.h"
 #include "core/files/display_text.h"
@@ -9,6 +8,7 @@
 #include "render/core/thumbnail_service.h"
 #include "ui/builders.h"
 #include "ui/controls/input.h"
+#include "ui/dialogs/file_entry_appearance.h"
 #include "ui/dialogs/file_icon.h"
 #include "ui/palette.h"
 #include "ui/style.h"
@@ -119,7 +119,8 @@ void FileEntryTile::bind(
 
   m_thumbnailEligible =
       m_allowThumbnailsAndMetadata && !entry.isDir && DirectoryScanner::isThumbnailPath(entry.absPath);
-  const std::string nextThumbnailPath = m_thumbnailEligible ? protectedThumbnail.value_or(entry.absPath.string()) : std::string();
+  const std::string nextThumbnailPath =
+      m_thumbnailEligible ? protectedThumbnail.value_or(entry.absPath.string()) : std::string();
   if (m_thumbnailPath != nextThumbnailPath) {
     releaseThumbnail();
     m_thumbnailDiskCache = !protectedThumbnail.has_value();
@@ -142,19 +143,19 @@ void FileEntryTile::bind(
 }
 
 void FileEntryTile::refreshThumbnail(Renderer& renderer) {
-  if (m_thumbnailEligible && !m_thumbnailPath.empty() && m_thumbnails != nullptr) {
-    const TextureHandle handle = m_thumbnails->peek(m_thumbnailPath, ThumbnailService::kDefaultTargetPx, m_thumbnailDiskCache);
-    if (handle.id != 0) {
-      m_image->setExternalTexture(renderer, handle);
-      m_image->setVisible(true);
-      m_glyph->setVisible(false);
-      return;
-    }
-  }
+  const auto handle = m_thumbnailEligible && m_thumbnails != nullptr && !m_thumbnailPath.empty()
+      ? m_thumbnails->peek(m_thumbnailPath, ThumbnailService::kDefaultTargetPx, m_thumbnailDiskCache)
+      : TextureHandle{};
+  showThumbnail(renderer, handle);
+}
 
-  m_image->clear(renderer);
-  m_image->setVisible(false);
-  m_glyph->setVisible(true);
+void FileEntryTile::showThumbnail(Renderer& renderer, TextureHandle handle) {
+  if (handle.id != 0)
+    m_image->setExternalTexture(renderer, handle);
+  else if (m_image->visible())
+    m_image->clear(renderer);
+  m_image->setVisible(handle.id != 0);
+  m_glyph->setVisible(handle.id == 0);
 }
 
 void FileEntryTile::clear(Renderer& renderer) {
@@ -181,6 +182,8 @@ InputArea* FileEntryTile::beginInlineEdit(
 ) {
   m_editPath = path;
   m_label->setVisible(false);
+  if (auto* subtitle = searchLocationLabel())
+    subtitle->setVisible(false);
   m_editor->setVisible(true);
   m_editor->setValue(name);
   m_editor->setOnSubmit(submit);
@@ -213,11 +216,16 @@ void FileEntryTile::endInlineEdit(const std::string& path) {
   m_editPath.clear();
   m_editor->setVisible(false);
   m_label->setVisible(true);
+  if (auto* subtitle = searchLocationLabel())
+    subtitle->setVisible(true);
   markLayoutDirty();
 }
 
 void FileEntryTile::setVisualState(bool selected, bool hovered, bool disabled, bool cut, bool focused) {
-  if (m_selected == selected && m_hovered == hovered && m_disabled == disabled && m_cut == cut
+  if (m_selected == selected
+      && m_hovered == hovered
+      && m_disabled == disabled
+      && m_cut == cut
       && m_focused == focused) {
     return;
   }
@@ -268,10 +276,36 @@ void FileEntryTile::doLayout(Renderer& renderer) {
   m_label->measure(renderer);
   const float labelY = previewY + previewHeight + Style::spaceSm * m_scale;
   m_label->setPosition(std::round((width - m_label->width()) * 0.5F), labelY);
+  if (auto* subtitle = searchLocationLabel()) {
+    subtitle->setMaxWidth(std::max(0.0F, width - Style::spaceSm * m_scale * 2.0F));
+    subtitle->measure(renderer);
+    subtitle->setPosition(std::round((width - subtitle->width()) * 0.5F), labelY + m_label->height());
+  }
   m_editor->setPosition(Style::spaceXs * m_scale, labelY - Style::spaceXs * m_scale);
   m_editor->setSize(std::max(0.0F, width - Style::spaceSm * 2.0F * m_scale), 28.0F * m_scale);
 
   InputArea::doLayout(renderer);
+}
+
+Label* FileEntryTile::searchLocationLabel() const {
+  // The optional search subtitle is appended after the inline editor.
+  return dynamic_cast<Label*>(children().back().get());
+}
+
+void FileEntryTile::setSearchLocation(std::string_view location) {
+  auto* label = searchLocationLabel();
+  if (!label) {
+    auto subtitle = ui::label({
+        .fontSize = Style::fontSizeMini * m_scale,
+        .maxLines = 1,
+        .textAlign = TextAlign::Center,
+    });
+    subtitle->setEllipsize(TextEllipsize::Start);
+    label = static_cast<Label*>(addChild(std::move(subtitle)));
+    applyVisualState();
+  }
+  label->setText(location);
+  label->setVisible(m_editPath.empty());
 }
 
 void FileEntryTile::applyVisualState() {
@@ -285,10 +319,14 @@ void FileEntryTile::applyVisualState() {
   const float alpha = filemanager::fileEntryIconNameAlpha(m_hidden, m_selected, m_hovered, m_disabled, m_cut);
 
   m_background->setFill(bg);
-  m_background->setBorder(m_focused ? focusRingColorSpec() : clearColorSpec(), m_focused ? Style::focusRingWidth : 0.0F);
+  m_background->setBorder(
+      m_focused ? focusRingColorSpec() : clearColorSpec(), m_focused ? Style::focusRingWidth : 0.0F
+  );
   m_glyph->setColor(withAlpha(glyphFg, alpha));
   m_image->setOpacity(alpha);
   m_label->setColor(withAlpha(labelFg, alpha));
+  if (auto* subtitle = searchLocationLabel())
+    subtitle->setColor(withAlpha(m_selected || m_hovered ? labelFg : colorForRole(ColorRole::OnSurfaceVariant), alpha));
   markLayoutDirty();
 }
 

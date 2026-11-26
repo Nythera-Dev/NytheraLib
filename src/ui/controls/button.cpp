@@ -1,5 +1,4 @@
 #include "ui/controls/button.h"
-#include "ui/dialogs/file_icon.h"
 
 #include "core/input/key_modifiers.h"
 #include "core/input/keybind_matcher.h"
@@ -8,6 +7,7 @@
 #include "render/scene/input_area.h"
 #include "ui/controls/glyph.h"
 #include "ui/controls/label.h"
+#include "ui/dialogs/file_icon.h"
 #include "ui/palette.h"
 #include "ui/style.h"
 
@@ -289,6 +289,13 @@ void Button::setText(std::string_view text) {
 void Button::setGlyph(std::string_view name) {
   ensureGlyph();
   m_glyph->setGlyph(name);
+}
+
+void Button::setTrailingGlyph(std::string_view name) {
+  ensureLabel();
+  setGlyph(name);
+  auto glyph = removeChild(m_glyph);
+  addChild(std::move(glyph));
 }
 
 void Button::setLeadingIcon(std::unique_ptr<Node> icon, float width) {

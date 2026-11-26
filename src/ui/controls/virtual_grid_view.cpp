@@ -184,6 +184,18 @@ void VirtualGridView::resetTransientStateForDataSwap() {
   notifyDataChanged();
 }
 
+void VirtualGridView::visitVisibleTiles(const std::function<void(Node&, std::size_t)>& visit) const {
+  const float top = m_scroll->scrollOffset();
+  const float bottom = top + m_scroll->contentViewportHeight();
+  if (bottom <= top)
+    return;
+  for (std::size_t slot = 0; slot < m_pool.size(); ++slot) {
+    auto* tile = m_pool[slot];
+    if (m_slotBoundIndex[slot] && tile->visible() && tile->y() < bottom && tile->y() + tile->height() > top)
+      visit(*tile, *m_slotBoundIndex[slot]);
+  }
+}
+
 void VirtualGridView::notifyDataChanged() {
   if (animationManager() != nullptr && m_selectionAnimationId != 0) {
     animationManager()->cancel(m_selectionAnimationId);

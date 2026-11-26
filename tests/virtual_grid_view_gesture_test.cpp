@@ -127,8 +127,9 @@ namespace {
       return node;
     }
     void bindTile(Node&, std::size_t, bool, bool) override {}
-    InputArea* beginInlineEdit(Node&, const std::string&, const std::string&,
-        std::function<void(const std::string&)>, std::function<void()>) override {
+    InputArea* beginInlineEdit(
+        Node&, const std::string&, const std::string&, std::function<void(const std::string&)>, std::function<void()>
+    ) override {
       editor->setVisible(true);
       return editor;
     }
@@ -142,6 +143,28 @@ namespace {
 int main() {
   StubRenderer renderer;
   RecordingAdapter adapter;
+
+  {
+    RecordingAdapter viewportAdapter;
+    viewportAdapter.count = 20;
+    VirtualGridView viewport;
+    viewport.setAdapter(&viewportAdapter);
+    viewport.setColumns(1);
+    viewport.setSquareCells(false);
+    viewport.setCellHeight(kCellHeight);
+    viewport.setRowGap(0.0F);
+    viewport.setSize(100.0F, 80.0F);
+    viewport.layout(renderer);
+    std::vector<std::size_t> visible;
+    viewport.visitVisibleTiles([&](Node&, std::size_t index) { visible.push_back(index); });
+    expect(visible == std::vector<std::size_t>{0, 1}, "thumbnail viewport included overscan");
+    viewport.scrollView().requestScrollToOffset(60.0F);
+    viewport.layout(renderer);
+    visible.clear();
+    viewport.visitVisibleTiles([&](Node&, std::size_t index) { visible.push_back(index); });
+    std::ranges::sort(visible);
+    expect(visible == std::vector<std::size_t>{1, 2, 3}, "thumbnail viewport excluded partially visible rows");
+  }
 
   VirtualGridView grid;
   grid.setAdapter(&adapter);

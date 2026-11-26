@@ -21,6 +21,13 @@ namespace filemanager {
   inline constexpr std::array<std::string_view, kFileColumns.size()> kFileColumnLabels{
       "Name", "Size", "Modified", "Type", "Created", "Accessed"
   };
+  // Search uses the Created cell for Location. The shared row keeps its existing layout.
+  inline constexpr FileColumn kSearchLocationSlot = FileColumn::Created;
+  inline constexpr auto kSearchFileColumnLabels = [] {
+    auto labels = kFileColumnLabels;
+    labels[static_cast<std::size_t>(kSearchLocationSlot)] = "Location";
+    return labels;
+  }();
   inline constexpr float fileColumnTextInset(bool trailing, float gap) noexcept {
     return trailing ? 12.0F : 12.0F - gap * 0.5F;
   }
@@ -63,6 +70,12 @@ namespace filemanager {
           slot = *next++;
       return true;
     }
+  };
+
+  inline constexpr FileColumnLayout kDefaultSearchColumnLayout{
+      {FileColumn::Name, kSearchLocationSlot, FileColumn::Size, FileColumn::Modified, FileColumn::Type,
+       FileColumn::Accessed},
+      {true, true, true, true, true, false},
   };
 
   inline float fileColumnTotal(FileColumns widths, std::span<const FileColumn> visible) {
@@ -190,6 +203,25 @@ namespace filemanager {
       if (comma != std::string_view::npos)
         text.remove_prefix(comma + 1);
     }
+    layout = parsed;
+    return true;
+  }
+
+  inline std::string serializeSearchFileColumnLayout(const FileColumnLayout& layout) {
+    auto text = serializeFileColumnLayout(layout);
+    text.replace(text.find("Created"), sizeof("Created") - 1, "Location");
+    return text;
+  }
+
+  inline bool parseSearchFileColumnLayout(std::string_view text, FileColumnLayout& layout) {
+    const auto location = text.find("Location");
+    if (location == std::string_view::npos || text.contains("Created"))
+      return false;
+    std::string normalized(text);
+    normalized.replace(location, sizeof("Location") - 1, "Created");
+    FileColumnLayout parsed;
+    if (!parseFileColumnLayout(normalized, parsed) || parsed.visible[columnIndex(FileColumn::Accessed)])
+      return false;
     layout = parsed;
     return true;
   }

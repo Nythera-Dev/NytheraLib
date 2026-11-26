@@ -39,6 +39,7 @@ public:
   void setControlHeight(float height);
   void setHorizontalPadding(float padding);
   void setClearButtonEnabled(bool enabled);
+  void setTrailingLabel(std::unique_ptr<Label> label);
   void setPasswordMode(bool enabled);
   /// Shows a password-mode value as plain text. Display only: the field keeps password semantics (no
   /// clipboard export, no undo history, sensitive text-input hints). Ignored outside password mode;
@@ -194,7 +195,8 @@ private:
   void markTextContentChanged();
   void rebuildCursorStops(Renderer& renderer);
   void rebuildCursorStopsFull(Renderer& renderer);
-  void recomputeContentLeadSlack(Renderer& renderer, float width, bool showClearButton);
+  void recomputeContentLeadSlack(Renderer& renderer);
+  [[nodiscard]] Label* trailingLabel() const noexcept;
   void updateLabelVisibleSlice(Renderer& renderer);
   void syncLabelScrollPosition();
   [[nodiscard]] std::size_t visibleLabelStartByte() const;

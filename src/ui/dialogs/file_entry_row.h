@@ -18,6 +18,7 @@ class FileIcon;
 class Image;
 class Label;
 class Renderer;
+struct TextureHandle;
 class ThumbnailService;
 class Input;
 
@@ -42,6 +43,9 @@ public:
   void setVisualState(bool selected, bool hovered, bool disabled, bool cut = false, bool focused = false);
   [[nodiscard]] bool isCut() const noexcept { return m_cut; }
   void setSelectionRoles(ColorRole background, ColorRole foreground);
+  // Presents a caller-owned thumbnail independently of file artwork queries.
+  void setSearchLocation(std::string_view location);
+  void showThumbnail(Renderer& renderer, TextureHandle handle);
   void setAllowThumbnailsAndMetadata(bool allow) noexcept { m_allowThumbnailsAndMetadata = allow; }
   [[nodiscard]] bool allowThumbnailsAndMetadata() const noexcept { return m_allowThumbnailsAndMetadata; }
   [[nodiscard]] FileIcon* fileIcon() const noexcept { return m_icon; }
