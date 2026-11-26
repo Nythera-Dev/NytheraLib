@@ -200,6 +200,47 @@ void FileEntryRow::setColumns(std::span<const FileColumn> columns, const fileman
   m_columnsConfigured = true;
 }
 
+void FileEntryRow::setColumnViewport(Renderer& renderer, float contentWidth, float scrollOffset) {
+  setClipChildren(true);
+  m_row->setMirrorInRtl(false);
+  m_row->setPosition(-scrollOffset, 0);
+  m_row->setSize(contentWidth, m_rowHeight);
+  m_row->layout(renderer);
+}
+
+std::string FileEntryRow::columnText(
+    const FileEntry& entry, FileColumn column, std::optional<std::uint64_t> folderItems,
+    std::string_view searchLocation, bool configuredColumns
+) {
+  switch (column) {
+  case FileColumn::Name:
+    return filemanager::sanitizeFilenameForDisplay(entry.name);
+  case FileColumn::Size:
+    if (!entry.isDir)
+      return formatFileSize(entry);
+    if (!configuredColumns)
+      return i18n::tr("ui.dialogs.file.entry.folder");
+    return folderItems ? i18n::trp("ui.dialogs.file.entry.folder-items", static_cast<long>(*folderItems)) : "—";
+  case FileColumn::Modified:
+    return formatFileTime(entry.mtime);
+  case FileColumn::Type: {
+    g_autofree char* description = entry.type.empty() ? nullptr : g_content_type_get_description(entry.type.c_str());
+    return description ? description : (entry.type.empty() ? "—" : entry.type);
+  }
+  case FileColumn::Created:
+    if (!searchLocation.empty())
+      return std::string(searchLocation);
+    if (entry.hasCreated)
+      return formatLocalUnixTime(static_cast<std::int64_t>(entry.created), "%Y-%m-%d %H:%M");
+    return "—";
+  case FileColumn::Accessed:
+    if (entry.hasAccessed)
+      return formatLocalUnixTime(static_cast<std::int64_t>(entry.accessed), "%Y-%m-%d %H:%M");
+    return "—";
+  }
+  return {};
+}
+
 void FileEntryRow::bind(
     Renderer& renderer, const FileEntry& entry, std::size_t index, float width, bool selected, bool hovered,
     bool disabled, std::optional<std::uint64_t> folderItems, bool cut, std::optional<std::string> protectedThumbnail,
@@ -236,44 +277,11 @@ void FileEntryRow::bind(
     m_icon->setSymlinkState(entry.isSymlink, false);
   m_image->setSize(m_iconSize, m_iconSize);
   refreshThumbnail(renderer);
-  m_name->setText(filemanager::sanitizeFilenameForDisplay(entry.name));
+  m_name->setText(columnText(entry, FileColumn::Name, folderItems));
   m_hidden = filemanager::isHiddenFileName(entry.name);
   for (auto column : m_columns) {
-    auto* label = m_columnLabels[columnIndex(column)];
-    switch (column) {
-    case FileColumn::Name:
-      break;
-    case FileColumn::Size:
-      if (!entry.isDir)
-        label->setText(formatFileSize(entry));
-      else if (!m_columnsConfigured)
-        label->setText(i18n::tr("ui.dialogs.file.entry.folder"));
-      else if (folderItems)
-        label->setText(i18n::trp("ui.dialogs.file.entry.folder-items", static_cast<long>(*folderItems)));
-      else
-        label->setText("—");
-      break;
-    case FileColumn::Modified:
-      label->setText(formatFileTime(entry.mtime));
-      break;
-    case FileColumn::Type: {
-      g_autofree char* description = entry.type.empty() ? nullptr : g_content_type_get_description(entry.type.c_str());
-      label->setText(description ? description : (entry.type.empty() ? "—" : entry.type));
-      break;
-    }
-    case FileColumn::Created:
-    case FileColumn::Accessed: {
-      const bool created = column == FileColumn::Created;
-      label->setText(
-          (created ? entry.hasCreated : entry.hasAccessed)
-              ? formatLocalUnixTime(
-                    static_cast<std::int64_t>(created ? entry.created : entry.accessed), "%Y-%m-%d %H:%M"
-                )
-              : "—"
-      );
-      break;
-    }
-    }
+    if (column != FileColumn::Name)
+      m_columnLabels[columnIndex(column)]->setText(columnText(entry, column, folderItems, {}, m_columnsConfigured));
   }
 
   applyVisualState();
@@ -361,7 +369,7 @@ void FileEntryRow::setSelectionRoles(ColorRole background, ColorRole foreground)
 void FileEntryRow::setSearchLocation(std::string_view location) {
   auto* label = m_columnLabels[columnIndex(filemanager::kSearchLocationSlot)];
   label->setTextAlign(TextAlign::Start);
-  label->setEllipsize(TextEllipsize::Start);
+  label->setEllipsize(TextEllipsize::End);
   label->setText(location);
 }
 

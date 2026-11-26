@@ -110,18 +110,22 @@ int main(int argc, char** argv) {
     const auto columns = filemanager::kDefaultSearchColumnLayout.displayed();
     row.setColumns(columns, {});
     row.bind(renderer, entry, 0, 800.0F, false, false, false);
-    row.setSearchLocation("folder");
+    row.setSearchLocation("/scope/folder");
     row.layout(renderer);
     const auto& cells = row.children()[1]->children();
     const auto& name = dynamic_cast<const Label&>(*cells[cells.size() - columns.size()]->children()[2]);
     const auto& location = dynamic_cast<const Label&>(*cells[cells.size() - columns.size() + 1]->children()[0]);
     assert(name.text() == "needle.txt");
-    assert(location.text() == "folder" && location.textAlign() == TextAlign::Start);
+    assert(
+        location.text() == "/scope/folder"
+        && location.textAlign() == TextAlign::Start
+        && location.ellipsize() == TextEllipsize::End
+    );
 
     FileEntryTile tile(1.0F, nullptr, metrics.gridIcon);
     tile.setAllowThumbnailsAndMetadata(false);
     tile.bind(renderer, entry, 0, metrics.gridCellWidth, metrics.gridCellHeight + 18.0F, false, false, false);
-    tile.setSearchLocation("folder");
+    tile.setSearchLocation("/scope/folder");
     tile.layout(renderer);
     const auto& subtitle = dynamic_cast<const Label&>(*tile.children().back());
     const auto filename = std::ranges::find_if(tile.children(), [](const auto& item) {
@@ -129,7 +133,11 @@ int main(int argc, char** argv) {
       return label && label->text() == "needle.txt";
     });
     assert(filename != tile.children().end());
-    assert(subtitle.text() == "folder" && subtitle.y() >= (*filename)->y() + (*filename)->height());
+    assert(
+        subtitle.text() == "/scope/folder"
+        && subtitle.ellipsize() == TextEllipsize::End
+        && subtitle.y() >= (*filename)->y() + (*filename)->height()
+    );
     assert(subtitle.y() + subtitle.height() <= tile.height());
   }
   assert(filemanager::clampFileViewScale(0.5F) == filemanager::kFileViewMinScale);

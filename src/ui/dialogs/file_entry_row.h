@@ -33,6 +33,12 @@ public:
   [[nodiscard]] float rowHeight() const noexcept { return m_rowHeight; }
 
   void setCallbacks(IndexCallback onClick, IndexCallback onMotion, IndexCallback onEnter, IndexCallback onLeave);
+  // Move only the cells. Row highlighting and input stay in the viewport.
+  void setColumnViewport(Renderer& renderer, float contentWidth, float scrollOffset);
+  [[nodiscard]] static std::string columnText(
+      const FileEntry& entry, filemanager::FileColumn column, std::optional<std::uint64_t> folderItems,
+      std::string_view searchLocation = {}, bool configuredColumns = true
+  );
   void setColumns(std::span<const filemanager::FileColumn> columns, const filemanager::FileColumns& widths);
   void bind(
       Renderer& renderer, const FileEntry& entry, std::size_t index, float width, bool selected, bool hovered,

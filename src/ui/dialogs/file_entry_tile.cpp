@@ -300,7 +300,7 @@ void FileEntryTile::setSearchLocation(std::string_view location) {
         .maxLines = 1,
         .textAlign = TextAlign::Center,
     });
-    subtitle->setEllipsize(TextEllipsize::Start);
+    subtitle->setEllipsize(TextEllipsize::End);
     label = static_cast<Label*>(addChild(std::move(subtitle)));
     applyVisualState();
   }
