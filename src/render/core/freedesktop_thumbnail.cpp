@@ -13,6 +13,7 @@ namespace freedesktop_thumbnail {
     constexpr std::array<std::uint8_t, 8> kSignature{137, 80, 78, 71, 13, 10, 26, 10};
     constexpr std::size_t kMaxText = 128 * 1024;
     constexpr std::string_view kNanoseconds = "X-Nythera::MTimeNS";
+    constexpr std::string_view kRenderSize = "X-Nythera::RenderSize";
 
     std::uint32_t read32(const std::uint8_t* p) {
       return (std::uint32_t{p[0]} << 24) | (std::uint32_t{p[1]} << 16) | (std::uint32_t{p[2]} << 8) | p[3];
@@ -99,30 +100,34 @@ namespace freedesktop_thumbnail {
     };
   }
 
-  bool matches(std::span<const std::uint8_t> png, const Identity& identity, int maxSide) {
+  Match match(std::span<const std::uint8_t> png, const Identity& identity, int maxSide) {
     if (png.size() < 33
         || !std::ranges::equal(png.first(8), kSignature)
         || read32(png.data() + 8) != 13
         || std::string_view(reinterpret_cast<const char*>(png.data() + 12), 4) != "IHDR")
-      return false;
+      return Match::Invalid;
     for (const auto offset : {16, 20}) {
       const auto dimension = read32(png.data() + offset);
       if (dimension == 0 || dimension > static_cast<std::uint32_t>(maxSide))
-        return false;
+        return Match::Invalid;
     }
 
     bool foundUri = false;
     bool foundMtime = false;
     bool foundSize = false;
     bool foundNs = false;
+    Match renderSize = Match::Thumbnail;
     for (std::size_t offset = 8; png.size() - offset >= 12;) {
       const auto size = read32(png.data() + offset);
       if (size > png.size() - offset - 12
           || crc32(0, png.data() + offset + 4, size + 4) != read32(png.data() + offset + 8 + size))
-        return false;
+        return Match::Invalid;
       const std::string_view type(reinterpret_cast<const char*>(png.data() + offset + 4), 4);
-      if (type == "IEND")
-        return size == 0 && offset + 12 == png.size() && foundUri && foundMtime;
+      if (type == "IEND") {
+        if (size != 0 || offset + 12 != png.size() || !foundUri || !foundMtime)
+          return Match::Invalid;
+        return foundNs && foundSize ? renderSize : Match::Thumbnail;
+      }
       if (type == "tEXt" || type == "zTXt" || type == "iTXt") {
         std::string_view data(reinterpret_cast<const char*>(png.data() + offset + 8), size);
         const auto separator = data.find('\0');
@@ -141,16 +146,22 @@ namespace freedesktop_thumbnail {
         } else if (key == kNanoseconds) {
           expected = &identity.mtimeNanoseconds;
           found = &foundNs;
+        } else if (key == kRenderSize && type == "tEXt" && separator != std::string_view::npos) {
+          const auto value = data.substr(separator + 1);
+          if (value == "original")
+            renderSize = Match::OriginalSize;
+          else if (value == std::to_string(maxSide))
+            renderSize = Match::RenderedSize;
         }
         if (found != nullptr) {
           if (*found || separator == std::string_view::npos || textValue(type, data.substr(separator + 1)) != *expected)
-            return false;
+            return Match::Invalid;
           *found = true;
         }
       }
       offset += size + 12;
     }
-    return false;
+    return Match::Invalid;
   }
 
   bool writtenBy(std::span<const std::uint8_t> png, std::string_view software) {
@@ -175,8 +186,10 @@ namespace freedesktop_thumbnail {
     return false;
   }
 
-  std::vector<std::uint8_t>
-  encode(const std::uint8_t* rgba, int width, int height, const Identity& identity, std::string_view software) {
+  std::vector<std::uint8_t> encode(
+      const std::uint8_t* rgba, int width, int height, const Identity& identity, std::string_view software,
+      int renderSize, bool originalSize
+  ) {
     auto png = encodePng(rgba, width, height);
     if (png.size() < 33 || identity.uri.size() > kMaxText)
       return {};
@@ -185,6 +198,7 @@ namespace freedesktop_thumbnail {
     appendText(metadata, "Thumb::MTime", identity.mtime);
     appendText(metadata, "Thumb::Size", identity.size);
     appendText(metadata, kNanoseconds, identity.mtimeNanoseconds);
+    appendText(metadata, kRenderSize, originalSize ? "original" : std::to_string(renderSize));
     appendText(metadata, "Software", software);
     png.insert(png.begin() + 33, metadata.begin(), metadata.end());
     return png;

@@ -164,6 +164,11 @@ int main() {
       const auto cacheDir = root / "thumbnails" / "large";
       const auto leaf = cacheDir / (std::string(hash) + ".png");
       std::filesystem::create_directories(cacheDir);
+      TEST_CHECK(chmod(cacheDir.parent_path().c_str(), 0755) == 0);
+      TEST_CHECK(chmod(cacheDir.c_str(), 0775) == 0);
+      const auto unrelated = cacheDir.parent_path() / "unrelated";
+      TEST_CHECK(std::filesystem::create_directory(unrelated));
+      TEST_CHECK(chmod(unrelated.c_str(), 0755) == 0);
       auto foreign = encodePng(transparent.data(), 256, 256);
       std::vector<std::uint8_t> metadata;
       auto append32 = [&](std::uint32_t number) {
@@ -193,6 +198,10 @@ int main() {
       const auto cached = load(source, 193, backend);
       TEST_CHECK(cached.size() == 193 * 193 * 4);
       checkAlpha(cached, 0);
+      struct stat mode{};
+      for (const auto& dir : {cacheDir.parent_path(), cacheDir})
+        TEST_CHECK(stat(dir.c_str(), &mode) == 0 && (mode.st_mode & 07777) == 0700);
+      TEST_CHECK(stat(unrelated.c_str(), &mode) == 0 && (mode.st_mode & 07777) == 0755);
       checkAlpha(load(source, 193, backend, false), 255);
       TEST_CHECK(!std::filesystem::exists(root / "nythera"));
 
@@ -235,6 +244,32 @@ int main() {
       write(onlyMemory, encodePng(opaque.data(), 300, 300));
       TEST_CHECK(load(onlyMemory, 64, backend, false).size() == 64 * 64 * 4);
       TEST_CHECK(!std::filesystem::exists(root / "thumbnails" / "normal"));
+    }
+
+    // A smaller bucket cannot stand in for a larger source, but an original-size
+    // cached raster can satisfy larger requests without decoding or upscaling.
+    {
+      constexpr auto backend = ThumbnailService::CacheBackend::FreedesktopPng;
+      const auto large = env.work() / "large.png";
+      const auto small = env.work() / "small.png";
+      const std::vector<std::uint8_t> rgba(600 * 300 * 4, 255);
+      write(large, encodePng(rgba.data(), 600, 300));
+      write(small, encodePng(rgba.data(), 64, 32));
+      std::atomic_int decodes{0};
+      const auto restoreObserver = nythera::test::makeScopeExit([] { setThumbnailDecodeObserverHookForTesting({}); });
+      setThumbnailDecodeObserverHookForTesting([&](const std::string&, std::size_t) { ++decodes; });
+      TEST_CHECK(load(large, 64, backend).size() == 64 * 32 * 4);
+      TEST_CHECK(load(large, 420, backend).size() == 420 * 210 * 4);
+      g_autofree gchar* uri = g_filename_to_uri(large.c_str(), nullptr, nullptr);
+      g_autofree gchar* hash = g_compute_checksum_for_string(G_CHECKSUM_MD5, uri, -1);
+      TEST_CHECK(std::filesystem::is_regular_file(root / "thumbnails" / "x-large" / (std::string(hash) + ".png")));
+      TEST_CHECK(load(large, 193, backend).size() == 193 * 97 * 4);
+      TEST_CHECK(decodes == 2);
+
+      TEST_CHECK(load(small, 64, backend).size() == 64 * 32 * 4);
+      TEST_CHECK(load(small, 512, backend).size() == 64 * 32 * 4);
+      TEST_CHECK(load(small, 900, backend).size() == 64 * 32 * 4);
+      TEST_CHECK(decodes == 3);
     }
 
     for (const auto& [target, bucket] :
