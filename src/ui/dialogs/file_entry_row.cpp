@@ -272,8 +272,10 @@ void FileEntryRow::bind(
   m_background->setSize(width, m_rowHeight);
   m_row->setSize(width, m_rowHeight);
 
-  const bool thumbnailEligible =
-      m_allowThumbnailsAndMetadata && !entry.isDir && DirectoryScanner::isThumbnailPath(entry.absPath);
+  const bool thumbnailEligible = m_manageThumbnail
+      && m_allowThumbnailsAndMetadata
+      && !entry.isDir
+      && DirectoryScanner::isThumbnailPath(entry.absPath);
   const std::string nextPath = thumbnailEligible ? protectedThumbnail.value_or(entry.absPath.string()) : std::string();
   if (m_thumbnailPath != nextPath) {
     releaseThumbnail();

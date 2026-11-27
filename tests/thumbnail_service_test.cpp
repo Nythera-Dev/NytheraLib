@@ -11,6 +11,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
+#include <cstring>
 #include <fcntl.h>
 #include <filesystem>
 #include <format>
@@ -25,6 +26,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <zlib.h>
 
 void setThumbnailCacheWriteHookForTesting(std::function<bool(const std::string&, const std::string&)> hook);
 void setThumbnailDecodeObserverHookForTesting(std::function<void(const std::string&, std::size_t)> hook);
@@ -83,10 +85,13 @@ namespace {
     TEST_CHECK(file.good());
   }
 
-  std::vector<std::uint8_t> load(const std::filesystem::path& path, int target) {
+  std::vector<std::uint8_t> load(
+      const std::filesystem::path& path, int target,
+      ThumbnailService::CacheBackend backend = ThumbnailService::CacheBackend::PrivateWebP, bool diskCache = true
+  ) {
     RecordingTextures textures;
-    ThumbnailService service;
-    (void)service.acquire(path.string(), target);
+    ThumbnailService service(backend);
+    (void)service.acquire(path.string(), target, diskCache);
     std::vector<pollfd> fds;
     const auto index = service.addPollFds(fds);
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
@@ -144,6 +149,104 @@ int main() {
       setThumbnailDecodeObserverHookForTesting({});
     });
     const auto& root = env.cache();
+
+    // Independently construct foreign PNG metadata, including a compressed URI.
+    {
+      constexpr auto backend = ThumbnailService::CacheBackend::FreedesktopPng;
+      const auto source = root / "shared # % thumbnail.png";
+      std::vector<std::uint8_t> opaque(300 * 300 * 4, 255);
+      std::vector<std::uint8_t> transparent(256 * 256 * 4, 0);
+      write(source, encodePng(opaque.data(), 300, 300));
+      struct stat info{};
+      TEST_CHECK(::stat(source.c_str(), &info) == 0);
+      g_autofree gchar* uri = g_filename_to_uri(source.c_str(), nullptr, nullptr);
+      g_autofree gchar* hash = g_compute_checksum_for_string(G_CHECKSUM_MD5, uri, -1);
+      const auto cacheDir = root / "thumbnails" / "large";
+      const auto leaf = cacheDir / (std::string(hash) + ".png");
+      std::filesystem::create_directories(cacheDir);
+      auto foreign = encodePng(transparent.data(), 256, 256);
+      std::vector<std::uint8_t> metadata;
+      auto append32 = [&](std::uint32_t number) {
+        for (const int shift : {24, 16, 8, 0})
+          metadata.push_back(static_cast<std::uint8_t>(number >> shift));
+      };
+      auto appendChunk = [&](std::string_view type, std::string_view payload) {
+        append32(payload.size());
+        const auto start = metadata.size();
+        metadata.insert(metadata.end(), type.begin(), type.end());
+        metadata.insert(metadata.end(), payload.begin(), payload.end());
+        append32(crc32(0, metadata.data() + start, metadata.size() - start));
+      };
+      std::string compressed(compressBound(strlen(uri)), '\0');
+      uLongf length = compressed.size();
+      TEST_CHECK(
+          compress(
+              reinterpret_cast<Bytef*>(compressed.data()), &length, reinterpret_cast<const Bytef*>(uri), strlen(uri)
+          )
+          == Z_OK
+      );
+      compressed.resize(length);
+      appendChunk("zTXt", std::string("Thumb::URI\0\0", 12) + compressed);
+      appendChunk("tEXt", std::string("Thumb::MTime\0", 13) + std::to_string(info.st_mtim.tv_sec));
+      foreign.insert(foreign.begin() + 33, metadata.begin(), metadata.end());
+      write(leaf, foreign);
+      const auto cached = load(source, 193, backend);
+      TEST_CHECK(cached.size() == 193 * 193 * 4);
+      checkAlpha(cached, 0);
+      checkAlpha(load(source, 193, backend, false), 255);
+      TEST_CHECK(!std::filesystem::exists(root / "nythera"));
+
+      const timespec changed[]{info.st_atim, {info.st_mtim.tv_sec + 1, info.st_mtim.tv_nsec}};
+      TEST_CHECK(utimensat(AT_FDCWD, source.c_str(), changed, 0) == 0);
+      checkAlpha(load(source, 193, backend), 255);
+      struct stat cachedInfo{};
+      TEST_CHECK(::stat(leaf.c_str(), &cachedInfo) == 0 && (cachedInfo.st_mode & 0777) == 0600);
+      checkAlpha(load(source, 64, backend), 255);
+      TEST_CHECK(!std::filesystem::exists(root / "thumbnails" / "normal"));
+
+      foreign[29] ^= 1; // The cached IHDR CRC is corrupt.
+      write(leaf, foreign);
+      checkAlpha(load(source, 193, backend), 255);
+
+      const auto foreignLeaf = cacheDir / (std::string(32, 'f') + ".png");
+      foreign[29] ^= 1;
+      write(foreignLeaf, foreign);
+      {
+        ThumbnailService service(backend);
+        std::vector<pollfd> fds;
+        const auto pollIndex = service.addPollFds(fds);
+        auto inspect = [&](bool clear) {
+          std::optional<ThumbnailService::DiskCacheInfo> info;
+          service.requestFreedesktopCacheInfo(clear, [&](auto result) { info = result; });
+          const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+          while (!info && std::chrono::steady_clock::now() < deadline) {
+            (void)poll(fds.data(), fds.size(), 50);
+            service.dispatch(fds, pollIndex);
+          }
+          TEST_CHECK(info.has_value());
+          return *info;
+        };
+        TEST_CHECK(inspect(false).thumbnails == 2);
+        TEST_CHECK(inspect(true).thumbnails == 1);
+        TEST_CHECK(std::filesystem::exists(foreignLeaf) && !std::filesystem::exists(leaf));
+      }
+
+      const auto onlyMemory = root / "memory-only.png";
+      write(onlyMemory, encodePng(opaque.data(), 300, 300));
+      TEST_CHECK(load(onlyMemory, 64, backend, false).size() == 64 * 64 * 4);
+      TEST_CHECK(!std::filesystem::exists(root / "thumbnails" / "normal"));
+    }
+
+    for (const auto& [target, bucket] :
+         std::array<std::pair<int, const char*>, 3>{{{65, "normal"}, {340, "x-large"}, {900, "xx-large"}}}) {
+      const auto source = root / (std::to_string(target) + ".png");
+      std::vector<std::uint8_t> rgba(300 * 300 * 4, 255);
+      write(source, encodePng(rgba.data(), 300, 300));
+      const auto pixels = load(source, target, ThumbnailService::CacheBackend::FreedesktopPng);
+      const auto displaySide = std::min(target, 300);
+      TEST_CHECK(pixels.size() == 4ULL * displaySide * displaySide);
+      TEST_CHECK(std::filesystem::exists(root / "thumbnails" / bucket));
+    }
 
     for (const std::uint8_t alpha : {0, 128, 255}) {
       std::vector<std::uint8_t> rgba(8 * 8 * 4);

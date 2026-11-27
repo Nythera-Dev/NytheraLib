@@ -2,6 +2,7 @@
 
 #include "core/files/directory_scanner.h"
 #include "core/log.h"
+#include "render/core/freedesktop_thumbnail.h"
 #include "render/core/image_decoder.h"
 #include "render/core/image_resize.h"
 #include "render/core/texture_manager.h"
@@ -11,10 +12,12 @@
 #include <array>
 #include <cairo.h>
 #include <cerrno>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <dirent.h>
 #include <expected>
 #include <fcntl.h>
 #include <filesystem>
@@ -89,28 +92,55 @@ namespace {
     int m_fd = -1;
   };
 
-  std::optional<std::filesystem::path> thumbnailCacheDir() {
+  std::optional<std::filesystem::path> thumbnailCacheDir(int pngSize = 0) {
+    const auto subdir = pngSize == 0 ? std::filesystem::path("nythera/thumbnails")
+                                     : std::filesystem::path("thumbnails") / freedesktop_thumbnail::directory(pngSize);
     if (const char* xdg = std::getenv("XDG_CACHE_HOME"); xdg != nullptr && xdg[0] != '\0') {
       const std::filesystem::path base(xdg);
       if (base.is_absolute()) {
-        return base / "nythera" / "thumbnails";
+        return base / subdir;
       }
     }
     if (const char* home = std::getenv("HOME"); home != nullptr && home[0] != '\0') {
       const std::filesystem::path base(home);
       if (base.is_absolute()) {
-        return base / ".cache" / "nythera" / "thumbnails";
+        return base / ".cache" / subdir;
       }
     }
     // Never fall back to a shared /tmp directory when no user cache directory is configured.
     return std::nullopt;
   }
 
-  OwnedFd openPrivateCacheDir(bool create) {
-    const auto dir = thumbnailCacheDir();
+  OwnedFd openSharedCacheDir(const std::filesystem::path& dir, bool create) {
+    const auto root = dir.parent_path();
+    if (create) {
+      std::error_code ec;
+      std::filesystem::create_directories(root.parent_path(), ec);
+      if (ec || (::mkdir(root.c_str(), 0700) != 0 && errno != EEXIST))
+        return {};
+    }
+    OwnedFd parent(::open(root.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    struct stat info{};
+    if (!parent || ::fstat(parent.get(), &info) != 0 || info.st_uid != ::geteuid() || (info.st_mode & 0022) != 0)
+      return {};
+
+    const auto leaf = dir.filename();
+    if (create && ::mkdirat(parent.get(), leaf.c_str(), 0700) != 0 && errno != EEXIST)
+      return {};
+    OwnedFd bucket(::openat(parent.get(), leaf.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if (!bucket || ::fstat(bucket.get(), &info) != 0 || info.st_uid != ::geteuid() || (info.st_mode & 0022) != 0)
+      return {};
+    return bucket;
+  }
+
+  OwnedFd openPrivateCacheDir(bool create, int pngSize = 0) {
+    const auto dir = thumbnailCacheDir(pngSize);
     if (!dir.has_value()) {
       return {};
     }
+
+    if (pngSize != 0)
+      return openSharedCacheDir(*dir, create);
 
     if (create) {
       std::error_code ec;
@@ -166,7 +196,7 @@ namespace {
     return digest + ".webp";
   }
 
-  bool inspectRegularSource(const std::string& sourcePath, struct stat& st) {
+  bool inspectRegularSource(const std::string& sourcePath, struct stat& st, bool allowLarge) {
     if (sourcePath.empty()) {
       return false;
     }
@@ -176,10 +206,10 @@ namespace {
     if (!S_ISREG(st.st_mode) || st.st_size <= 0) {
       return false;
     }
-    return static_cast<std::uint64_t>(st.st_size) <= ThumbnailService::kMaxSourceFileBytes;
+    return allowLarge || static_cast<std::uint64_t>(st.st_size) <= ThumbnailService::kMaxSourceFileBytes;
   }
 
-  OwnedFd openRegularSource(const std::string& sourcePath, struct stat& st) {
+  OwnedFd openRegularSource(const std::string& sourcePath, struct stat& st, bool allowLarge) {
     if (sourcePath.empty()) {
       return {};
     }
@@ -190,10 +220,21 @@ namespace {
     if (::fstat(fd.get(), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size <= 0) {
       return {};
     }
-    if (static_cast<std::uint64_t>(st.st_size) > ThumbnailService::kMaxSourceFileBytes) {
+    if (!allowLarge && static_cast<std::uint64_t>(st.st_size) > ThumbnailService::kMaxSourceFileBytes) {
       return {};
     }
     return fd;
+  }
+
+  bool sourceStillCurrent(const std::string& path, const struct stat& opened) {
+    struct stat current{};
+    return ::lstat(path.c_str(), &current) == 0
+        && S_ISREG(current.st_mode)
+        && current.st_dev == opened.st_dev
+        && current.st_ino == opened.st_ino
+        && current.st_size == opened.st_size
+        && current.st_mtim.tv_sec == opened.st_mtim.tv_sec
+        && current.st_mtim.tv_nsec == opened.st_mtim.tv_nsec;
   }
 
   std::vector<std::uint8_t> readBoundedFd(int fd, std::size_t maxBytes, std::size_t reserveHint) {
@@ -600,7 +641,138 @@ void ThumbnailService::Subscription::disconnect() {
   disconnect();
 }
 
-ThumbnailService::ThumbnailService() {
+struct ThumbnailService::CacheMaintenance {
+  using Clock = std::chrono::steady_clock;
+  std::optional<Clock::time_point> nextPrune;
+  std::size_t budget = 0;
+  bool running = false;
+  struct Request {
+    bool clear;
+    std::function<void(DiskCacheInfo)> callback;
+  };
+  std::vector<Request> requests;
+  std::vector<std::function<void()>> completions;
+};
+
+void ThumbnailService::setSourceFileLimit(std::size_t bytes) {
+  m_sourceLimit.store(std::clamp<std::size_t>(bytes, 1, kMaxSourceFileBytes));
+}
+
+void ThumbnailService::setFreedesktopCacheBudget(std::size_t bytes) {
+  if (!m_cacheMaintenance)
+    return;
+  {
+    std::scoped_lock lock(m_queueMutex);
+    if (m_cacheMaintenance->budget == bytes)
+      return;
+    m_cacheMaintenance->budget = bytes;
+    if (bytes == 0)
+      m_cacheMaintenance->nextPrune.reset();
+  }
+  scheduleCachePrune();
+}
+
+void ThumbnailService::scheduleCachePrune() {
+  {
+    std::scoped_lock lock(m_queueMutex);
+    auto& cache = *m_cacheMaintenance;
+    if (cache.budget == 0 || cache.nextPrune)
+      return;
+    cache.nextPrune = CacheMaintenance::Clock::now() + std::chrono::milliseconds(250);
+  }
+  m_queueCv.notify_all();
+}
+
+void ThumbnailService::requestFreedesktopCacheInfo(bool clear, std::function<void(DiskCacheInfo)> callback) {
+  if (!m_cacheMaintenance || !callback)
+    return;
+  {
+    std::scoped_lock lock(m_queueMutex);
+    m_cacheMaintenance->requests.push_back({clear, std::move(callback)});
+  }
+  m_queueCv.notify_all();
+}
+
+ThumbnailService::DiskCacheInfo ThumbnailService::maintainFreedesktopCache(bool clear, std::size_t budget) {
+  struct CachedFile {
+    int bucket;
+    std::string name;
+    struct stat info;
+  };
+  std::array<OwnedFd, std::size(freedesktop_thumbnail::sizes)> buckets;
+  std::vector<CachedFile> files;
+  DiskCacheInfo total;
+  const auto remove = [](const CachedFile& file) {
+    struct stat current{};
+    return ::fstatat(file.bucket, file.name.c_str(), &current, AT_SYMLINK_NOFOLLOW) == 0
+        && current.st_dev == file.info.st_dev
+        && current.st_ino == file.info.st_ino
+        && current.st_mtim.tv_sec == file.info.st_mtim.tv_sec
+        && current.st_mtim.tv_nsec == file.info.st_mtim.tv_nsec
+        && ::unlinkat(file.bucket, file.name.c_str(), 0) == 0;
+  };
+  for (std::size_t i = 0; i < buckets.size() && !m_shutdown.load(); ++i) {
+    auto& bucket = buckets[i];
+    bucket = openPrivateCacheDir(false, freedesktop_thumbnail::sizes[i]);
+    if (!bucket)
+      continue;
+    OwnedFd scanFd(::fcntl(bucket.get(), F_DUPFD_CLOEXEC, 0));
+    if (!scanFd)
+      continue;
+    auto* stream = ::fdopendir(scanFd.get());
+    if (!stream)
+      continue;
+    (void)scanFd.release();
+    while (!m_shutdown.load()) {
+      const auto* entry = ::readdir(stream);
+      if (!entry)
+        break;
+      const std::string_view name(entry->d_name);
+      if (name.size() != 36
+          || !name.ends_with(".png")
+          || name.substr(0, 32).find_first_not_of("0123456789abcdef") != std::string_view::npos)
+        continue;
+      CachedFile file{bucket.get(), std::string(name), {}};
+      if (::fstatat(file.bucket, file.name.c_str(), &file.info, AT_SYMLINK_NOFOLLOW) != 0
+          || !S_ISREG(file.info.st_mode)
+          || file.info.st_uid != ::geteuid()
+          || file.info.st_size <= 0)
+        continue;
+      if (clear
+          && freedesktop_thumbnail::writtenBy(readCacheEntry(file.bucket, file.name), m_cacheSoftware)
+          && remove(file))
+        continue;
+      total.bytes += static_cast<std::uintmax_t>(file.info.st_size);
+      ++total.thumbnails;
+      if (budget)
+        files.push_back(std::move(file));
+    }
+    ::closedir(stream);
+  }
+  if (budget && total.bytes > budget) {
+    std::ranges::sort(files, [](const auto& a, const auto& b) {
+      return std::pair{a.info.st_mtim.tv_sec, a.info.st_mtim.tv_nsec}
+      < std::pair{b.info.st_mtim.tv_sec, b.info.st_mtim.tv_nsec};
+    });
+    for (const auto& file : files) {
+      if (m_shutdown.load() || total.bytes <= budget)
+        break;
+      if (remove(file)) {
+        total.bytes -= static_cast<std::uintmax_t>(file.info.st_size);
+        --total.thumbnails;
+      }
+    }
+  }
+  return total;
+}
+
+ThumbnailService::ThumbnailService() : ThumbnailService(CacheBackend::PrivateWebP) {}
+
+ThumbnailService::ThumbnailService(CacheBackend backend) : ThumbnailService(backend, {}) {}
+
+ThumbnailService::ThumbnailService(CacheBackend backend, Provider provider, std::string cacheSoftware)
+    : m_cacheBackend(backend), m_provider(std::move(provider)), m_cacheSoftware(std::move(cacheSoftware)),
+      m_cacheMaintenance(backend == CacheBackend::FreedesktopPng ? std::make_unique<CacheMaintenance>() : nullptr) {
   m_eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
   if (m_eventFd < 0) {
     kLog.warn("failed to create eventfd; thumbnail wakeups will be disabled");
@@ -813,7 +985,10 @@ void ThumbnailService::enqueueDecodeIfNeeded(const RequestKey& key) {
     return;
   }
   m_inFlight.insert(key);
-  m_jobQueue.push_back(key);
+  if (m_cacheBackend == CacheBackend::FreedesktopPng && !key.diskCache)
+    m_jobQueue.push_front(key);
+  else
+    m_jobQueue.push_back(key);
   m_queueCv.notify_one();
 }
 
@@ -930,7 +1105,19 @@ void ThumbnailService::dispatch(const std::vector<pollfd>& fds, std::size_t star
   while (::read(m_eventFd, &ignored, sizeof(ignored)) > 0) {
   }
 
-  notifyPendingUpload();
+  std::vector<std::function<void()>> completions;
+  if (m_cacheMaintenance) {
+    std::scoped_lock lock(m_queueMutex);
+    completions.swap(m_cacheMaintenance->completions);
+  }
+  const std::weak_ptr<bool> alive = m_lifetimeToken;
+  for (auto& callback : completions) {
+    if (alive.expired())
+      return;
+    callback();
+  }
+  if (!alive.expired())
+    notifyPendingUpload();
 }
 
 void ThumbnailService::signalMain() {
@@ -1008,18 +1195,62 @@ void ThumbnailService::notifyReady(const RequestKey& key, TextureHandle handle) 
 void ThumbnailService::workerLoop() {
   while (true) {
     RequestKey key;
+    std::vector<CacheMaintenance::Request> maintenance;
+    std::size_t pruneBudget = 0;
+    bool maintain = false;
     {
-      std::unique_lock<std::mutex> lock(m_queueMutex);
-      m_queueCv.wait(lock, [this] { return m_shutdown.load() || !m_jobQueue.empty(); });
-      if (m_shutdown.load()) {
+      std::unique_lock lock(m_queueMutex);
+      while (!m_shutdown.load()) {
+        auto* cache = m_cacheMaintenance.get();
+        if (cache && !cache->running) {
+          const bool prune = cache->nextPrune && CacheMaintenance::Clock::now() >= *cache->nextPrune;
+          if (prune || !cache->requests.empty()) {
+            maintain = cache->running = true;
+            maintenance.swap(cache->requests);
+            if (prune) {
+              pruneBudget = cache->budget;
+              cache->nextPrune.reset();
+            }
+            break;
+          }
+        }
+        if (!m_jobQueue.empty())
+          break;
+        if (cache && !cache->running && cache->nextPrune) {
+          const auto deadline = *cache->nextPrune;
+          m_queueCv.wait_until(lock, deadline);
+        } else {
+          m_queueCv.wait(lock);
+        }
+      }
+      if (m_shutdown.load())
         return;
+      if (!maintain) {
+        key = std::move(m_jobQueue.front());
+        m_jobQueue.pop_front();
+        if (m_canceled.erase(key) > 0) {
+          m_inFlight.erase(key);
+          continue;
+        }
       }
-      key = std::move(m_jobQueue.front());
-      m_jobQueue.pop_front();
-      if (m_canceled.erase(key) > 0) {
-        m_inFlight.erase(key);
-        continue;
+    }
+    if (maintain) {
+      std::vector<std::function<void()>> completions;
+      if (pruneBudget)
+        (void)maintainFreedesktopCache(false, pruneBudget);
+      for (auto& request : maintenance) {
+        const auto info = maintainFreedesktopCache(request.clear, 0);
+        completions.push_back([callback = std::move(request.callback), info] { callback(info); });
       }
+      {
+        std::scoped_lock lock(m_queueMutex);
+        m_cacheMaintenance->running = false;
+        std::ranges::move(completions, std::back_inserter(m_cacheMaintenance->completions));
+      }
+      if (!completions.empty())
+        signalMain();
+      m_queueCv.notify_all();
+      continue;
     }
 
     const std::string& path = key.path;
@@ -1027,7 +1258,7 @@ void ThumbnailService::workerLoop() {
     result.key = key;
 
     struct stat inspectedStat{};
-    if (!inspectRegularSource(path, inspectedStat)) {
+    if (!inspectRegularSource(path, inspectedStat, static_cast<bool>(m_provider))) {
       if (tryAbortIfCanceled(key)) {
         continue;
       }
@@ -1036,7 +1267,11 @@ void ThumbnailService::workerLoop() {
       continue;
     }
 
-    if (OwnedFd cacheDir = key.diskCache ? openPrivateCacheDir(false) : OwnedFd{}; cacheDir) {
+    const bool webpCache = key.diskCache && m_cacheBackend == CacheBackend::PrivateWebP;
+    const int pngSize = key.diskCache && m_cacheBackend == CacheBackend::FreedesktopPng
+        ? freedesktop_thumbnail::sizeClass(key.targetPx)
+        : 0;
+    if (OwnedFd cacheDir = webpCache ? openPrivateCacheDir(false) : OwnedFd{}; cacheDir) {
       const std::string leaf = cacheLeafForStat(path, inspectedStat, key.targetPx);
       auto cachedBytes = readCacheEntry(cacheDir.get(), leaf);
       if (!cachedBytes.empty()) {
@@ -1063,7 +1298,7 @@ void ThumbnailService::workerLoop() {
     }
 
     struct stat openedStat{};
-    OwnedFd sourceFd = openRegularSource(path, openedStat);
+    OwnedFd sourceFd = openRegularSource(path, openedStat, static_cast<bool>(m_provider));
     if (!sourceFd) {
       if (tryAbortIfCanceled(key)) {
         continue;
@@ -1073,141 +1308,116 @@ void ThumbnailService::workerLoop() {
       continue;
     }
 
-    const auto sourceSize = static_cast<std::size_t>(openedStat.st_size);
-    const bool svgExt = DirectoryScanner::isSvgPath(path);
-    const std::size_t maxSourceForPath = svgExt ? kMaxSvgSourceBytes : kMaxSourceFileBytes;
-    if (sourceSize > maxSourceForPath) {
-      kLog.warn("rejecting oversized thumbnail source {} ({} bytes > {} limit)", path, sourceSize, maxSourceForPath);
-      if (tryAbortIfCanceled(key)) {
-        continue;
-      }
-      result.failed = true;
-      pushResult(std::move(result));
-      continue;
-    }
-
-    if (!acquireMemoryBudget(key, sourceSize)) {
-      (void)tryAbortIfCanceled(key);
-      continue;
-    }
-
-    struct MemoryLease {
-      ThumbnailService* service = nullptr;
-      std::size_t bytes = 0;
-      void release() {
-        if (service != nullptr) {
-          service->releaseMemoryBudget(bytes);
-          service = nullptr;
-          bytes = 0;
-        }
-      }
-      ~MemoryLease() { release(); }
-    } lease{this, sourceSize};
-
-    if (tryAbortIfCanceled(key)) {
-      continue;
-    }
-
-    auto bytes = readBoundedFd(sourceFd.get(), maxSourceForPath, sourceSize);
-    sourceFd.reset();
-    if (bytes.empty()) {
-      lease.release();
-      if (tryAbortIfCanceled(key)) {
-        continue;
-      }
-      result.failed = true;
-      pushResult(std::move(result));
-      continue;
-    }
-
-    if (tryAbortIfCanceled(key)) {
-      continue;
-    }
-
-    bool isSvg = false;
-    if (svgExt && isGzipHeader(bytes)) {
-      auto decompressed = decompressGzipBounded(bytes.data(), bytes.size(), kMaxSvgSourceBytes);
-      bytes.clear();
-      bytes.shrink_to_fit();
-      if (!decompressed || !looksLikeSvg(*decompressed)) {
-        kLog.warn(
-            "rejecting invalid SVGZ thumbnail source {}: {}", path,
-            decompressed ? "decompressed payload is not SVG" : decompressed.error()
+    const auto pngDir = pngSize != 0 ? thumbnailCacheDir(pngSize) : std::nullopt;
+    const auto relativeToCache = pngDir
+        ? std::filesystem::path(path).lexically_normal().lexically_relative(pngDir->parent_path())
+        : std::filesystem::path{};
+    const bool insideCache = !relativeToCache.empty() && *relativeToCache.begin() != "..";
+    const auto pngIdentity = pngDir && !insideCache ? freedesktop_thumbnail::identify(path, openedStat) : std::nullopt;
+    const int decodeTarget = pngIdentity ? pngSize : key.targetPx;
+    if (pngIdentity) {
+      std::array<int, 4> cacheSizes{128, 256, 512, 1024};
+      // Prefer the requested bucket, then higher resolutions, then a smaller
+      // existing browsing thumbnail when no better cache entry is available.
+      auto bucket = std::ranges::find(cacheSizes, pngSize);
+      std::reverse(cacheSizes.begin(), bucket);
+      std::rotate(cacheSizes.begin(), bucket, cacheSizes.end());
+      for (const int side : cacheSizes) {
+        const auto directory = openPrivateCacheDir(false, side);
+        if (!directory)
+          continue;
+        const auto bytes = readCacheEntry(directory.get(), pngIdentity->leaf);
+        if (!freedesktop_thumbnail::matches(bytes, *pngIdentity, side))
+          continue;
+        auto cached = decodeRasterImage(
+            bytes.data(), bytes.size(), {.maxDimension = side, .maxDecodedBytes = 8ULL * side * side + 65536}
         );
-        lease.release();
-        if (tryAbortIfCanceled(key)) {
+        if (!cached || !resizeThumbnail(cached->pixels, cached->width, cached->height, key.targetPx))
           continue;
-        }
-        result.failed = true;
-        pushResult(std::move(result));
+        if (!sourceStillCurrent(path, openedStat))
+          continue;
+        result.rgba = std::move(cached->pixels);
+        result.width = cached->width;
+        result.height = cached->height;
+        break;
+      }
+      if (!result.rgba.empty()) {
+        if (!tryAbortIfCanceled(key))
+          pushResult(std::move(result));
         continue;
       }
-      bytes = std::move(*decompressed);
-      isSvg = true;
-    } else if (svgExt || looksLikeSvg(bytes)) {
-      if (bytes.size() > kMaxSvgSourceBytes || !looksLikeSvg(bytes)) {
-        kLog.warn("rejecting invalid or oversized SVG thumbnail source {}", path);
-        lease.release();
-        if (tryAbortIfCanceled(key)) {
-          continue;
-        }
-        result.failed = true;
-        pushResult(std::move(result));
-        continue;
-      }
-      isSvg = true;
     }
 
+    const auto sourceSize = static_cast<std::size_t>(openedStat.st_size);
+    const auto sourceLimit = m_sourceLimit.load();
     int w = 0;
     int h = 0;
     std::vector<std::uint8_t> pixels;
-
-    if (isSvg) {
-      const int clampedTargetPx = std::clamp(key.targetPx > 0 ? key.targetPx : kDefaultTargetPx, 1, kMaxSvgRenderPx);
-      const std::uint64_t surfaceBytes =
-          static_cast<std::uint64_t>(clampedTargetPx) * static_cast<std::uint64_t>(clampedTargetPx) * 4ULL;
-      const std::uint64_t workingBytes = surfaceBytes * 2ULL;
-      const std::uint64_t totalEstimate = workingBytes <= (std::numeric_limits<std::uint64_t>::max() - bytes.size())
-          ? static_cast<std::uint64_t>(bytes.size()) + workingBytes
-          : std::numeric_limits<std::uint64_t>::max();
-      const std::size_t decodeReserveBytes =
-          static_cast<std::size_t>(std::min<std::uint64_t>(totalEstimate, std::numeric_limits<std::size_t>::max()));
-
-      if (decodeReserveBytes > lease.bytes) {
-        lease.release();
-        if (!acquireMemoryBudget(key, decodeReserveBytes)) {
-          (void)tryAbortIfCanceled(key);
+    if (tryAbortIfCanceled(key))
+      continue;
+    if (m_provider) {
+      const int providerSide = std::clamp(decodeTarget, 1, kMaxSvgRenderPx);
+      const auto reserve = 8ULL * providerSide * providerSide + kMaxCacheFileBytes;
+      if (!acquireMemoryBudget(key, reserve)) {
+        (void)tryAbortIfCanceled(key);
+        continue;
+      }
+      auto provided =
+          m_provider(sourceFd.get(), path, sourceSize, sourceLimit, providerSide, key.diskCache, [this, &key] {
+            return isCanceledOrShuttingDown(key);
+          });
+      releaseMemoryBudget(reserve);
+      if (tryAbortIfCanceled(key))
+        continue;
+      if (provided
+          && provided->width > 0
+          && provided->height > 0
+          && provided->width <= providerSide
+          && provided->height <= providerSide
+          && provided->pixels.size() == 4ULL * provided->width * provided->height) {
+        w = provided->width;
+        h = provided->height;
+        pixels = std::move(provided->pixels);
+      }
+    }
+    if (pixels.empty()) {
+      const bool svgExt = DirectoryScanner::isSvgPath(path);
+      const std::size_t maxSourceForPath = svgExt ? std::min(kMaxSvgSourceBytes, sourceLimit) : sourceLimit;
+      if (sourceSize > maxSourceForPath) {
+        kLog.warn("rejecting oversized thumbnail source {} ({} bytes > {} limit)", path, sourceSize, maxSourceForPath);
+        if (tryAbortIfCanceled(key)) {
           continue;
         }
-        lease.service = this;
-        lease.bytes = decodeReserveBytes;
+        result.failed = true;
+        pushResult(std::move(result));
+        continue;
       }
 
-      {
-        std::function<void(const std::string&, std::size_t)> observer;
-        std::size_t usedNow = 0;
-        {
-          std::scoped_lock lock(g_testHookMutex);
-          observer = g_decodeObserverHook;
-        }
-        if (observer) {
-          {
-            std::scoped_lock lock(m_memoryMutex);
-            usedNow = m_usedMemoryBytes;
-          }
-          observer(path, usedNow);
-        }
+      if (!acquireMemoryBudget(key, sourceSize)) {
+        (void)tryAbortIfCanceled(key);
+        continue;
       }
+
+      struct MemoryLease {
+        ThumbnailService* service = nullptr;
+        std::size_t bytes = 0;
+        void release() {
+          if (service != nullptr) {
+            service->releaseMemoryBudget(bytes);
+            service = nullptr;
+            bytes = 0;
+          }
+        }
+        ~MemoryLease() { release(); }
+      } lease{this, sourceSize};
 
       if (tryAbortIfCanceled(key)) {
         continue;
       }
 
-      auto rendered = rasterizeSvgThumbnail(bytes.data(), bytes.size(), clampedTargetPx);
-      bytes.clear();
-      bytes.shrink_to_fit();
-      if (!rendered) {
-        kLog.warn("failed to rasterize SVG thumbnail {}: {}", path, rendered.error());
+      auto bytes = readBoundedFd(sourceFd.get(), maxSourceForPath, sourceSize);
+      sourceFd.reset();
+      if (bytes.empty()) {
         lease.release();
         if (tryAbortIfCanceled(key)) {
           continue;
@@ -1217,27 +1427,19 @@ void ThumbnailService::workerLoop() {
         continue;
       }
 
-      w = rendered->width;
-      h = rendered->height;
-      pixels = std::move(rendered->pixels);
-      lease.release();
-    } else {
-      const RasterDecodeLimits decodeLimits{
-          .maxDimension = kMaxImageDimension,
-          .maxDecodedBytes = kMaxDecodedBytes,
-      };
-      std::size_t decodeReserveBytes = bytes.size();
-      if (const auto extent = probeRasterImageExtent(bytes.data(), bytes.size())) {
-        const std::uint64_t decodedBytes =
-            static_cast<std::uint64_t>(extent->width) * static_cast<std::uint64_t>(extent->height) * 4ULL;
-        if (extent->width <= 0
-            || extent->height <= 0
-            || extent->width > decodeLimits.maxDimension
-            || extent->height > decodeLimits.maxDimension
-            || decodedBytes > decodeLimits.maxDecodedBytes) {
+      if (tryAbortIfCanceled(key)) {
+        continue;
+      }
+
+      bool isSvg = false;
+      if (svgExt && isGzipHeader(bytes)) {
+        auto decompressed = decompressGzipBounded(bytes.data(), bytes.size(), kMaxSvgSourceBytes);
+        bytes.clear();
+        bytes.shrink_to_fit();
+        if (!decompressed || !looksLikeSvg(*decompressed)) {
           kLog.warn(
-              "rejecting oversized thumbnail source {} ({}x{}, {} bytes decoded)", path, extent->width, extent->height,
-              decodedBytes
+              "rejecting invalid SVGZ thumbnail source {}: {}", path,
+              decompressed ? "decompressed payload is not SVG" : decompressed.error()
           );
           lease.release();
           if (tryAbortIfCanceled(key)) {
@@ -1247,84 +1449,186 @@ void ThumbnailService::workerLoop() {
           pushResult(std::move(result));
           continue;
         }
-        // Account for compressed input + decoded RGBA pixels + decoder/resize working buffer.
-        const std::uint64_t workingBytes = decodedBytes <= (std::numeric_limits<std::uint64_t>::max() / 2ULL)
-            ? decodedBytes * 2ULL
-            : std::numeric_limits<std::uint64_t>::max();
+        bytes = std::move(*decompressed);
+        isSvg = true;
+      } else if (svgExt || looksLikeSvg(bytes)) {
+        if (bytes.size() > kMaxSvgSourceBytes || !looksLikeSvg(bytes)) {
+          kLog.warn("rejecting invalid or oversized SVG thumbnail source {}", path);
+          lease.release();
+          if (tryAbortIfCanceled(key)) {
+            continue;
+          }
+          result.failed = true;
+          pushResult(std::move(result));
+          continue;
+        }
+        isSvg = true;
+      }
+
+      if (isSvg) {
+        const int clampedTargetPx = std::clamp(decodeTarget > 0 ? decodeTarget : kDefaultTargetPx, 1, kMaxSvgRenderPx);
+        const std::uint64_t surfaceBytes =
+            static_cast<std::uint64_t>(clampedTargetPx) * static_cast<std::uint64_t>(clampedTargetPx) * 4ULL;
+        const std::uint64_t workingBytes = surfaceBytes * 2ULL;
         const std::uint64_t totalEstimate = workingBytes <= (std::numeric_limits<std::uint64_t>::max() - bytes.size())
             ? static_cast<std::uint64_t>(bytes.size()) + workingBytes
             : std::numeric_limits<std::uint64_t>::max();
-        decodeReserveBytes =
+        const std::size_t decodeReserveBytes =
             static_cast<std::size_t>(std::min<std::uint64_t>(totalEstimate, std::numeric_limits<std::size_t>::max()));
-      }
 
-      if (decodeReserveBytes > lease.bytes) {
-        // Release the compressed-input lease before acquiring the combined decode
-        // reservation to avoid hold-and-wait deadlocks across workers.
-        lease.release();
-        if (!acquireMemoryBudget(key, decodeReserveBytes)) {
-          (void)tryAbortIfCanceled(key);
-          continue;
-        }
-        lease.service = this;
-        lease.bytes = decodeReserveBytes;
-      }
-
-      {
-        std::function<void(const std::string&, std::size_t)> observer;
-        std::size_t usedNow = 0;
-        {
-          std::scoped_lock lock(g_testHookMutex);
-          observer = g_decodeObserverHook;
-        }
-        if (observer) {
-          {
-            std::scoped_lock lock(m_memoryMutex);
-            usedNow = m_usedMemoryBytes;
+        if (decodeReserveBytes > lease.bytes) {
+          lease.release();
+          if (!acquireMemoryBudget(key, decodeReserveBytes)) {
+            (void)tryAbortIfCanceled(key);
+            continue;
           }
-          observer(path, usedNow);
+          lease.service = this;
+          lease.bytes = decodeReserveBytes;
         }
-      }
 
-      if (tryAbortIfCanceled(key)) {
-        continue;
-      }
+        {
+          std::function<void(const std::string&, std::size_t)> observer;
+          std::size_t usedNow = 0;
+          {
+            std::scoped_lock lock(g_testHookMutex);
+            observer = g_decodeObserverHook;
+          }
+          if (observer) {
+            {
+              std::scoped_lock lock(m_memoryMutex);
+              usedNow = m_usedMemoryBytes;
+            }
+            observer(path, usedNow);
+          }
+        }
 
-      auto decoded = decodeRasterImage(bytes.data(), bytes.size(), decodeLimits);
-      bytes.clear();
-      bytes.shrink_to_fit();
-      if (!decoded) {
-        lease.release();
         if (tryAbortIfCanceled(key)) {
           continue;
         }
-        result.failed = true;
-        pushResult(std::move(result));
-        continue;
-      }
 
-      w = decoded->width;
-      h = decoded->height;
-      pixels = std::move(decoded->pixels);
+        auto rendered = rasterizeSvgThumbnail(bytes.data(), bytes.size(), clampedTargetPx);
+        bytes.clear();
+        bytes.shrink_to_fit();
+        if (!rendered) {
+          kLog.warn("failed to rasterize SVG thumbnail {}: {}", path, rendered.error());
+          lease.release();
+          if (tryAbortIfCanceled(key)) {
+            continue;
+          }
+          result.failed = true;
+          pushResult(std::move(result));
+          continue;
+        }
 
-      if (!resizeThumbnail(pixels, w, h, key.targetPx)) {
+        w = rendered->width;
+        h = rendered->height;
+        pixels = std::move(rendered->pixels);
         lease.release();
+      } else {
+        const RasterDecodeLimits decodeLimits{
+            .maxDimension = kMaxImageDimension,
+            .maxDecodedBytes = kMaxDecodedBytes,
+        };
+        std::size_t decodeReserveBytes = bytes.size();
+        if (const auto extent = probeRasterImageExtent(bytes.data(), bytes.size())) {
+          const std::uint64_t decodedBytes =
+              static_cast<std::uint64_t>(extent->width) * static_cast<std::uint64_t>(extent->height) * 4ULL;
+          if (extent->width <= 0
+              || extent->height <= 0
+              || extent->width > decodeLimits.maxDimension
+              || extent->height > decodeLimits.maxDimension
+              || decodedBytes > decodeLimits.maxDecodedBytes) {
+            kLog.warn(
+                "rejecting oversized thumbnail source {} ({}x{}, {} bytes decoded)", path, extent->width,
+                extent->height, decodedBytes
+            );
+            lease.release();
+            if (tryAbortIfCanceled(key)) {
+              continue;
+            }
+            result.failed = true;
+            pushResult(std::move(result));
+            continue;
+          }
+          // Account for compressed input + decoded RGBA pixels + decoder/resize working buffer.
+          const std::uint64_t workingBytes = decodedBytes <= (std::numeric_limits<std::uint64_t>::max() / 2ULL)
+              ? decodedBytes * 2ULL
+              : std::numeric_limits<std::uint64_t>::max();
+          const std::uint64_t totalEstimate = workingBytes <= (std::numeric_limits<std::uint64_t>::max() - bytes.size())
+              ? static_cast<std::uint64_t>(bytes.size()) + workingBytes
+              : std::numeric_limits<std::uint64_t>::max();
+          decodeReserveBytes =
+              static_cast<std::size_t>(std::min<std::uint64_t>(totalEstimate, std::numeric_limits<std::size_t>::max()));
+        }
+
+        if (decodeReserveBytes > lease.bytes) {
+          // Release the compressed-input lease before acquiring the combined decode
+          // reservation to avoid hold-and-wait deadlocks across workers.
+          lease.release();
+          if (!acquireMemoryBudget(key, decodeReserveBytes)) {
+            (void)tryAbortIfCanceled(key);
+            continue;
+          }
+          lease.service = this;
+          lease.bytes = decodeReserveBytes;
+        }
+
+        {
+          std::function<void(const std::string&, std::size_t)> observer;
+          std::size_t usedNow = 0;
+          {
+            std::scoped_lock lock(g_testHookMutex);
+            observer = g_decodeObserverHook;
+          }
+          if (observer) {
+            {
+              std::scoped_lock lock(m_memoryMutex);
+              usedNow = m_usedMemoryBytes;
+            }
+            observer(path, usedNow);
+          }
+        }
+
         if (tryAbortIfCanceled(key)) {
           continue;
         }
-        result.failed = true;
-        pushResult(std::move(result));
-        continue;
-      }
 
-      lease.release();
+        auto decoded = decodeRasterImage(bytes.data(), bytes.size(), decodeLimits);
+        bytes.clear();
+        bytes.shrink_to_fit();
+        if (!decoded) {
+          lease.release();
+          if (tryAbortIfCanceled(key)) {
+            continue;
+          }
+          result.failed = true;
+          pushResult(std::move(result));
+          continue;
+        }
+
+        w = decoded->width;
+        h = decoded->height;
+        pixels = std::move(decoded->pixels);
+
+        if (!resizeThumbnail(pixels, w, h, decodeTarget)) {
+          lease.release();
+          if (tryAbortIfCanceled(key)) {
+            continue;
+          }
+          result.failed = true;
+          pushResult(std::move(result));
+          continue;
+        }
+
+        lease.release();
+      }
     }
 
     if (tryAbortIfCanceled(key)) {
       continue;
     }
 
-    if (OwnedFd cacheDir = key.diskCache ? openPrivateCacheDir(true) : OwnedFd{}; cacheDir) {
+    if (OwnedFd cacheDir = webpCache ? openPrivateCacheDir(true) : OwnedFd{}; cacheDir) {
       const std::string leaf = cacheLeafForStat(path, openedStat, key.targetPx);
       std::uint8_t* encoded = nullptr;
       const std::size_t encodedSize = WebPEncodeRGBA(pixels.data(), w, h, w * 4, kThumbnailWebPQuality, &encoded);
@@ -1337,6 +1641,31 @@ void ThumbnailService::workerLoop() {
     if (tryAbortIfCanceled(key)) {
       continue;
     }
+
+    if (m_cacheBackend == CacheBackend::FreedesktopPng && !sourceStillCurrent(path, openedStat)) {
+      result.failed = true;
+      pushResult(std::move(result));
+      continue;
+    }
+
+    if (pngIdentity) {
+      auto encoded = freedesktop_thumbnail::encode(pixels.data(), w, h, *pngIdentity, m_cacheSoftware);
+      if (!encoded.empty()
+          && encoded.size() <= kMaxCacheFileBytes
+          && !isCanceledOrShuttingDown(key)
+          && sourceStillCurrent(path, openedStat)) {
+        if (const auto directory = openPrivateCacheDir(true, pngSize);
+            directory && writeCacheEntryAtomic(directory.get(), pngIdentity->leaf, encoded.data(), encoded.size()))
+          scheduleCachePrune();
+      }
+      if (!resizeThumbnail(pixels, w, h, key.targetPx)) {
+        result.failed = true;
+        pushResult(std::move(result));
+        continue;
+      }
+    }
+    if (tryAbortIfCanceled(key))
+      continue;
 
     result.rgba = std::move(pixels);
     result.width = w;

@@ -117,8 +117,10 @@ void FileEntryTile::bind(
   setSize(width, height);
   m_background->setSize(width, height);
 
-  m_thumbnailEligible =
-      m_allowThumbnailsAndMetadata && !entry.isDir && DirectoryScanner::isThumbnailPath(entry.absPath);
+  m_thumbnailEligible = m_manageThumbnail
+      && m_allowThumbnailsAndMetadata
+      && !entry.isDir
+      && DirectoryScanner::isThumbnailPath(entry.absPath);
   const std::string nextThumbnailPath =
       m_thumbnailEligible ? protectedThumbnail.value_or(entry.absPath.string()) : std::string();
   if (m_thumbnailPath != nextThumbnailPath) {

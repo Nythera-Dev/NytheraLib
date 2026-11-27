@@ -108,6 +108,7 @@ xkbcommon_dep       = dependency('xkbcommon')
 glib_dep            = dependency('glib-2.0')
 gobject_dep         = dependency('gobject-2.0')
 gio_dep             = dependency('gio-2.0')
+zlib_dep            = dependency('zlib')
 curl_dep            = dependency('libcurl')
 md4c_dep            = dependency('md4c')
 nlohmann_dep        = dependency('nlohmann_json')
@@ -336,6 +337,7 @@ _nythera_lib_sources = files(
   'src/render/core/shader_program.cpp',
   'src/render/core/stb_image_resize_impl.cpp',
   'src/render/core/thumbnail_service.cpp',
+  'src/render/core/freedesktop_thumbnail.cpp',
   'src/render/core/image_decoder.cpp',
   'src/render/core/heif_library.cpp',
   'src/render/core/image_encoder.cpp',
@@ -497,6 +499,7 @@ _nythera_system_dependencies = [
   glib_dep,
   gobject_dep,
   gio_dep,
+  zlib_dep,
   dependency('gio-unix-2.0'),
   curl_dep,
   nlohmann_dep,

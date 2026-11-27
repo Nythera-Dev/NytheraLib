@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/poll_source.h"
+#include "render/core/image_decoder.h"
 #include "render/core/texture_handle.h"
 
 #include <atomic>
@@ -10,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -21,8 +23,8 @@ class TextureManager;
 // Shared async thumbnail loader for image-backed UI. Worker threads decode and
 // downsample images off the main thread; the main loop uploads finished
 // pixmaps through TextureManager via uploadPending(). The service keeps
-// explicit in-memory acquire/release ownership while persisting resized WebP
-// files in the on-disk thumbnail cache.
+// explicit in-memory acquire/release ownership. Consumers select the persistent
+// cache backend and can bypass disk caching per request.
 class ThumbnailService : public PollSource {
 public:
   using PendingUploadCallback = std::function<void()>;
@@ -61,7 +63,31 @@ public:
     std::function<void()> m_disconnect;
   };
 
+  enum class CacheBackend { PrivateWebP, FreedesktopPng };
+
   ThumbnailService();
+  explicit ThumbnailService(CacheBackend backend);
+
+  // Optional worker-side fallback for formats owned by an application. The
+  // source descriptor is borrowed and pinned; providers must honour cancellation
+  // and bound their input, pixels and runtime. A missing result falls back to
+  // the built-in decoder when the source is within its limits.
+  using Provider = std::function<std::optional<DecodedRasterImage>(
+      int fd, const std::string& path, std::size_t sourceBytes, std::size_t sourceLimit, int targetPx, bool browsing,
+      const std::function<bool()>& canceled
+  )>;
+  ThumbnailService(CacheBackend backend, Provider provider, std::string cacheSoftware = "NytheraLib");
+
+  struct DiskCacheInfo {
+    std::uintmax_t bytes = 0;
+    std::size_t thumbnails = 0;
+  };
+  // Apply to future requests. A zero cache budget disables automatic pruning.
+  void setSourceFileLimit(std::size_t bytes);
+  void setFreedesktopCacheBudget(std::size_t bytes);
+  // Runs on an existing worker. Clear removes only entries marked with this
+  // service's Software name. The callback runs on the main loop.
+  void requestFreedesktopCacheInfo(bool clear, std::function<void(DiskCacheInfo)> callback);
   ~ThumbnailService() override;
 
   ThumbnailService(const ThumbnailService&) = delete;
@@ -80,7 +106,8 @@ public:
   [[nodiscard]] TextureHandle acquire(const std::string& path, int targetPx = kDefaultTargetPx, bool diskCache = true);
 
   // Non-owning lookup used while refreshing an already-acquired thumbnail.
-  [[nodiscard]] TextureHandle peek(const std::string& path, int targetPx = kDefaultTargetPx, bool diskCache = true) const;
+  [[nodiscard]] TextureHandle
+  peek(const std::string& path, int targetPx = kDefaultTargetPx, bool diskCache = true) const;
 
   // Releases one acquire() owner. The texture is unloaded only when the last
   // owner releases it.
@@ -150,6 +177,14 @@ private:
     ReadyCallback callback;
   };
 
+  const CacheBackend m_cacheBackend;
+  const Provider m_provider;
+  const std::string m_cacheSoftware;
+  std::atomic_size_t m_sourceLimit{kMaxSourceFileBytes};
+  struct CacheMaintenance;
+  std::unique_ptr<CacheMaintenance> m_cacheMaintenance;
+  void scheduleCachePrune();
+  DiskCacheInfo maintainFreedesktopCache(bool clear, std::size_t budget);
   int m_eventFd = -1;
   std::vector<std::thread> m_workers;
   std::atomic<bool> m_shutdown{false};

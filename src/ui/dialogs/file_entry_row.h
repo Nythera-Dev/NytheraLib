@@ -53,6 +53,7 @@ public:
   void setSearchLocation(std::string_view location);
   void showThumbnail(Renderer& renderer, TextureHandle handle);
   void setAllowThumbnailsAndMetadata(bool allow) noexcept { m_allowThumbnailsAndMetadata = allow; }
+  void setManageThumbnail(bool manage) { m_manageThumbnail = manage; }
   [[nodiscard]] bool allowThumbnailsAndMetadata() const noexcept { return m_allowThumbnailsAndMetadata; }
   [[nodiscard]] FileIcon* fileIcon() const noexcept { return m_icon; }
   [[nodiscard]] InputArea* beginInlineEdit(
@@ -82,6 +83,7 @@ private:
   bool m_cut = false;
   bool m_focused = false;
   bool m_hidden = false;
+  bool m_manageThumbnail = true;
   bool m_allowThumbnailsAndMetadata = true;
   ColorRole m_selectedBackgroundRole = ColorRole::Primary;
   ColorRole m_selectedForegroundRole = ColorRole::OnPrimary;

@@ -33,6 +33,17 @@ namespace nythera::config {
           || key == "fzf_search") {
         return node.is_boolean();
       }
+      if (key == "preview_mode" || key == "thumbnail_policy") {
+        const auto value = node.value_exact<std::string_view>();
+        return value
+            && (key == "preview_mode" ? *value == "full" || *value == "information" || *value == "hidden"
+                                      : *value == "never" || *value == "local" || *value == "all");
+      }
+      if (key == "thumbnail_max_file_mib" || key == "thumbnail_cache_mib") {
+        const auto value = node.value_exact<std::int64_t>();
+        return value
+            && (key == "thumbnail_max_file_mib" ? *value >= 1 && *value <= 64 : *value >= 16 && *value <= 8192);
+      }
       if (key == "search_default_mode") {
         constexpr std::array<std::string_view, 7> modes{"contiguous", "fuzzy", "starts_with", "ends_with",
                                                         "exclude",    "exact", "none"};
