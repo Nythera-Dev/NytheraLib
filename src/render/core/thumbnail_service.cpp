@@ -895,6 +895,11 @@ TextureHandle ThumbnailService::peek(const std::string& path, int targetPx, bool
   return it->second.handle;
 }
 
+bool ThumbnailService::failed(const std::string& path, int targetPx, bool diskCache) const {
+  const auto it = m_entries.find(RequestKey{.path = path, .targetPx = targetPx, .diskCache = diskCache});
+  return it != m_entries.end() && it->second.failed;
+}
+
 void ThumbnailService::release(const std::string& path, int targetPx, bool diskCache) {
   const RequestKey key{.path = path, .targetPx = targetPx, .diskCache = diskCache};
   const auto it = m_entries.find(key);

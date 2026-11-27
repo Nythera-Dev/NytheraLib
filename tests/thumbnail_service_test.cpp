@@ -844,11 +844,11 @@ int main() {
       // Non-SVG gzip payload named .svgz must fail cleanly.
       const auto fakeSvgz = root / "not-svg.svgz";
       write(fakeSvgz, gzipCompress("just plain text, not xml or svg"));
-      (void)service.acquire(fakeSvgz.string(), 64);
-      pumpUntil(service, textures, [&] {
-        return ThumbnailServiceTestAccess::isFailed(service, fakeSvgz.string(), 64);
-      });
-      TEST_CHECK(service.peek(fakeSvgz.string(), 64).id == 0);
+      (void)service.acquire(fakeSvgz.string(), 64, false);
+      TEST_CHECK(!service.failed(fakeSvgz.string(), 64, false));
+      pumpUntil(service, textures, [&] { return service.failed(fakeSvgz.string(), 64, false); });
+      TEST_CHECK(!service.peek(fakeSvgz.string(), 64, false).valid());
+      TEST_CHECK(!service.failed(fakeSvgz.string(), 64, true));
 
       // Truncated/corrupt gzip payload named .svgz must fail cleanly.
       const auto corruptSvgz = root / "corrupt.svgz";

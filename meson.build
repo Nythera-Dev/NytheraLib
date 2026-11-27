@@ -229,6 +229,7 @@ _protocol_sources = []
 foreach protocol : [
   ['xdg-output-unstable-v1', wayland_protos_dir / 'unstable/xdg-output/xdg-output-unstable-v1.xml'],
   ['xdg-shell', wayland_protos_dir / 'stable/xdg-shell/xdg-shell.xml'],
+  ['xdg-dialog-v1', wayland_protos_dir / 'staging/xdg-dialog/xdg-dialog-v1.xml'],
   ['xdg-activation-v1', wayland_protos_dir / 'staging/xdg-activation/xdg-activation-v1.xml'],
   ['ext-background-effect-v1', wayland_protos_dir / 'staging/ext-background-effect/ext-background-effect-v1.xml'],
   ['fractional-scale-v1', wayland_protos_dir / 'staging/fractional-scale/fractional-scale-v1.xml'],

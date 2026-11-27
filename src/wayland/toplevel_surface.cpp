@@ -2,6 +2,7 @@
 
 #include "core/log.h"
 #include "wayland/wayland_connection.h"
+#include "xdg-dialog-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
 #include <algorithm>
@@ -73,7 +74,8 @@ bool ToplevelSurface::initialize(wl_output* output, const ToplevelSurfaceConfig&
   xdg_toplevel_add_listener(m_toplevel, &kToplevelListener, this);
   xdg_toplevel_set_title(m_toplevel, config.title.empty() ? "Nythera" : config.title.c_str());
   xdg_toplevel_set_app_id(m_toplevel, config.appId != nullptr ? config.appId : "dev.nythera.Nythera");
-  if (config.parent != nullptr) xdg_toplevel_set_parent(m_toplevel, config.parent);
+  if (config.parent != nullptr)
+    xdg_toplevel_set_parent(m_toplevel, config.parent);
   if (config.minWidth > 0 || config.minHeight > 0) {
     xdg_toplevel_set_min_size(
         m_toplevel, static_cast<std::int32_t>(config.minWidth), static_cast<std::int32_t>(config.minHeight)
@@ -116,6 +118,71 @@ void ToplevelSurface::setMinSize(std::uint32_t minWidth, std::uint32_t minHeight
   if (m_toplevel != nullptr) {
     xdg_toplevel_set_min_size(m_toplevel, static_cast<std::int32_t>(minWidth), static_cast<std::int32_t>(minHeight));
   }
+}
+
+void ToplevelSurface::resizeClient(std::uint32_t width, std::uint32_t height) {
+  if (!isRunning() || width == 0 || height == 0 || (this->width() == width && this->height() == height)) {
+    return;
+  }
+  m_pendingWidth = width;
+  m_pendingHeight = height;
+  m_lastToplevelWidth = 0;
+  m_lastToplevelHeight = 0;
+  Surface::onConfigure(width, height);
+}
+
+void ToplevelSurface::ModalHintDeleter::operator()(xdg_dialog_v1* dialog) const { xdg_dialog_v1_destroy(dialog); }
+
+void ToplevelSurface::ModalHintDeleter::operator()(xdg_wm_dialog_v1* manager) const {
+  xdg_wm_dialog_v1_destroy(manager);
+}
+
+ToplevelSurface::ModalManager ToplevelSurface::bindModalManager(WaylandConnection& connection) {
+  // Discover the optional extension without dispatching unrelated application events.
+  auto* display = connection.display();
+  auto* queue = wl_display_create_queue(display);
+  auto* wrapper = wl_proxy_create_wrapper(display);
+  if (queue == nullptr || wrapper == nullptr) {
+    if (wrapper != nullptr)
+      wl_proxy_wrapper_destroy(wrapper);
+    if (queue != nullptr)
+      wl_event_queue_destroy(queue);
+    return {};
+  }
+  wl_proxy_set_queue(static_cast<wl_proxy*>(wrapper), queue);
+  auto* registry = wl_display_get_registry(static_cast<wl_display*>(wrapper));
+  wl_proxy_wrapper_destroy(wrapper);
+  ModalManager manager;
+  constexpr wl_registry_listener listener{
+      .global =
+          [](void* data, wl_registry* source, std::uint32_t name, const char* interface, std::uint32_t) {
+            auto& bound = *static_cast<ModalManager*>(data);
+            if (!bound && std::string_view(interface) == xdg_wm_dialog_v1_interface.name)
+              bound.reset(
+                  static_cast<xdg_wm_dialog_v1*>(wl_registry_bind(source, name, &xdg_wm_dialog_v1_interface, 1))
+              );
+          },
+      .global_remove = [](void*, wl_registry*, std::uint32_t) {},
+  };
+  if (registry != nullptr) {
+    wl_registry_add_listener(registry, &listener, &manager);
+    if (wl_display_roundtrip_queue(display, queue) < 0)
+      manager.reset();
+    wl_registry_destroy(registry);
+  }
+  if (manager)
+    wl_proxy_set_queue(reinterpret_cast<wl_proxy*>(manager.get()), nullptr);
+  wl_event_queue_destroy(queue);
+  return manager;
+}
+
+ToplevelSurface::ModalHint ToplevelSurface::createModalHint(xdg_wm_dialog_v1* manager) const {
+  if (manager == nullptr || m_toplevel == nullptr)
+    return {};
+  ModalHint hint(xdg_wm_dialog_v1_get_xdg_dialog(manager, m_toplevel));
+  if (hint)
+    xdg_dialog_v1_set_modal(hint.get());
+  return hint;
 }
 
 void ToplevelSurface::beginMove(std::uint32_t serial) {

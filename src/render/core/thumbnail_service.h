@@ -108,6 +108,7 @@ public:
   // Non-owning lookup used while refreshing an already-acquired thumbnail.
   [[nodiscard]] TextureHandle
   peek(const std::string& path, int targetPx = kDefaultTargetPx, bool diskCache = true) const;
+  [[nodiscard]] bool failed(const std::string& path, int targetPx, bool diskCache) const;
 
   // Releases one acquire() owner. The texture is unloaded only when the last
   // owner releases it.

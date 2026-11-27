@@ -4,13 +4,16 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 
 struct wl_array;
 struct wl_output;
+struct xdg_dialog_v1;
 struct xdg_surface;
 struct xdg_toplevel;
+struct xdg_wm_dialog_v1;
 
 struct ToplevelSurfaceConfig {
   std::uint32_t width = 720;
@@ -37,6 +40,16 @@ public:
   void setSuspendedCallback(std::function<void(bool)> callback);
   void setTitle(std::string_view title);
   void setMinSize(std::uint32_t minWidth, std::uint32_t minHeight);
+  // Resize a floating toplevel by committing a new client-selected buffer size.
+  void resizeClient(std::uint32_t width, std::uint32_t height);
+  struct ModalHintDeleter {
+    void operator()(xdg_wm_dialog_v1* manager) const;
+    void operator()(xdg_dialog_v1* dialog) const;
+  };
+  using ModalManager = std::unique_ptr<xdg_wm_dialog_v1, ModalHintDeleter>;
+  using ModalHint = std::unique_ptr<xdg_dialog_v1, ModalHintDeleter>;
+  [[nodiscard]] static ModalManager bindModalManager(WaylandConnection& connection);
+  [[nodiscard]] ModalHint createModalHint(xdg_wm_dialog_v1* manager) const;
   void beginMove(std::uint32_t serial);
   void beginResize(std::uint32_t serial);
 
