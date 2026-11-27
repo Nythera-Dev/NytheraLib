@@ -4,7 +4,7 @@ NytheraLib provides the shared C++23 infrastructure for Nythera Shell and Files.
 
 ## Build and install
 
-On Arch Linux, build the package from a checkout using `makepkg -si` in `packaging/arch`. Pacman tracks the installed package and the applications’ dependency on it.
+On Arch Linux, build the package from a checkout using `makepkg -si` in `packaging/arch`. Pacman tracks the installed package and the applications’ dependency on it. For the testing AUR package, see the [AUR installation and maintainer guide](packaging/aur/README.md).
 
 Local builds require CMake and the system header-only toml11 development package (4.4 or newer within v4) for comment-preserving configuration writes. toml++ remains the parser used by configuration loading, schema validation and StateStore.
 
@@ -44,7 +44,7 @@ Meson installs these files under the specified prefix:
 
 ## Coordinated development and rebuild discipline (`0.1.x`)
 
-The Shell and Files packages currently require NytheraLib `0.1.x`. Keep coordinated development on `dev`; stable applications use a compatible packaged release from `main`. An incompatible binary interface outside coordinated `dev` iteration requires bumping `VERSION` (e.g., `0.2.0`) and `soversion`.
+The Shell and Files packages currently require NytheraLib `0.1.x`. Keep coordinated development on `dev`. AUR snapshots use `testing`, and `main` is reserved for future stable releases. An incompatible binary interface outside coordinated `dev` iteration requires bumping `VERSION` (e.g., `0.2.0`) and `soversion`.
 
 Because NytheraLib exports a wide C++23 header surface under a fixed `soversion: '0'` during `0.1.x` development, follow these rules across repositories:
 

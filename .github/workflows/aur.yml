@@ -1,0 +1,110 @@
+name: AUR testing packages
+
+on:
+  push:
+    branches: [testing]
+  workflow_call:
+    secrets:
+      AUR_SSH_PRIVATE_KEY:
+        required: true
+      AUR_SSH_KNOWN_HOSTS:
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aur-testing
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/testing'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out NytheraLib
+        uses: actions/checkout@v6
+        with:
+          repository: Nythera-Dev/NytheraLib
+          ref: ${{ github.repository == 'Nythera-Dev/NytheraLib' && github.sha || 'testing' }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: lib
+      - name: Check out Nythera Files
+        uses: actions/checkout@v6
+        with:
+          repository: Nythera-Dev/Nythera-Files
+          ref: ${{ github.repository == 'Nythera-Dev/Nythera-Files' && github.sha || 'testing' }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: files
+      - name: Build and install both packages on Arch Linux
+        run: |
+          inputs=$(mktemp -d)
+          trap 'rm -rf -- "$inputs"' EXIT
+          for project in lib files; do
+            mkdir "$inputs/$project"
+            git -C "$project" bundle create "$inputs/$project/source.bundle" HEAD
+            cp "$project/packaging/aur/"{PKGBUILD,.SRCINFO} "$inputs/$project/"
+          done
+          docker run --rm --pull=always \
+            --mount "type=bind,src=$inputs,dst=/inputs,readonly" \
+            --mount "type=bind,src=$PWD/lib/packaging/aur/validate.sh,dst=/validate.sh,readonly" \
+            archlinux:base-devel bash /validate.sh
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the triggering repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          path: source
+      - name: Publish changed metadata
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          AUR_SSH_KNOWN_HOSTS: ${{ secrets.AUR_SSH_KNOWN_HOSTS }}
+        run: |
+          remote=$(git -C source ls-remote origin refs/heads/testing)
+          if [[ ${remote%%$'\t'*} != "$GITHUB_SHA" ]]; then
+            echo 'A newer testing snapshot superseded this run'
+            exit 0
+          fi
+          case "${GITHUB_REPOSITORY,,}" in
+            nythera-dev/nytheralib) package=nythera-lib-git ;;
+            nythera-dev/nythera-files) package=nythera-files-git ;;
+            *) echo "Unsupported repository: $GITHUB_REPOSITORY" >&2; exit 1 ;;
+          esac
+
+          : "${AUR_SSH_PRIVATE_KEY:?Set the AUR_SSH_PRIVATE_KEY Actions secret}"
+          : "${AUR_SSH_KNOWN_HOSTS:?Set the AUR_SSH_KNOWN_HOSTS Actions secret}"
+
+          work=$(mktemp -d)
+          trap 'rm -rf -- "$work"' EXIT
+          (
+            umask 077
+            printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$work/key"
+            printf '%s\n' "$AUR_SSH_KNOWN_HOSTS" > "$work/known_hosts"
+          )
+          unset AUR_SSH_PRIVATE_KEY AUR_SSH_KNOWN_HOSTS
+          export GIT_SSH_COMMAND="ssh -i '$work/key' -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile='$work/known_hosts'"
+          git clone --branch master "ssh://aur@aur.archlinux.org/$package.git" "$work/aur"
+          cp source/packaging/aur/{PKGBUILD,.SRCINFO} "$work/aur/"
+          cd "$work/aur"
+          git add -- PKGBUILD .SRCINFO
+          if git diff --cached --quiet; then
+            echo "$package metadata is already current"
+            exit 0
+          fi
+
+          git -c user.name='Nythera AUR automation' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m "Update $package packaging"
+          git push origin HEAD:refs/heads/master
