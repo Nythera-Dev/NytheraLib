@@ -2,6 +2,23 @@
 
 Repository-specific guidance supplementing global agent instructions. Follow global rules alongside this document; do not treat this file as replacing them.
 
+## Engineering Philosophy
+
+**Practical engineering and acceptable risk.**
+
+Nythera is designed to be lightweight, responsive, reliable and maintainable. It is not an enterprise-grade security product.
+
+- Prefer established, proven approaches over unnecessarily complex custom solutions.
+- Evaluate safeguards against realistic risks, not every theoretically possible edge case.
+- Balance safety against performance, compatibility, complexity and maintenance costs.
+- Prefer stronger guarantees where readily available, with practical fallbacks where appropriate.
+- Do not sacrifice everyday functionality to eliminate exceedingly rare risks without clear justification.
+- Treat explicitly accepted risks as settled engineering decisions, not outstanding defects.
+- Benchmark potentially expensive safeguards before recommending or implementing them.
+- Do not expand agreed safety requirements without approval.
+
+The objective is reliable software for everyday use, not absolute guarantees at any cost.
+
 ## Common development rules
 
 ### Workflow, scope and tool efficiency
