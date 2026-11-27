@@ -6,6 +6,8 @@ These Nythera v5 palette files are stored in the repository in the format descri
 
 `Scarlet-Protocol.json` adapts the [Cyberpunk Scarlet Protocol palette](https://cmuxthemes.com/fr/themes/cyberpunk-scarlet-protocol/) for Nythera's shell color roles. The source is a Ghostty terminal palette, so the Nythera surface, text, hover and outline roles are mapped to fit the same dark scarlet identity. The yellow ANSI pair is desaturated and dimmed from the source to be less glaring. Cyan and green remain in terminal syntax colors; the shell's interface accents stay in the red family.
 
+The built-in **Nythera** palette uses these colors in dark mode. Its light mode uses pale rose surfaces and deeper crimson accents.
+
 ## Umbriel Redline
 
 `Umbriel-Redline.json` is an original Nythera palette based on the restrained concept direction: charcoal surfaces, neutral text, and selective crimson highlights. It avoids neon cyan and keeps the terminal colors muted for extended use.
