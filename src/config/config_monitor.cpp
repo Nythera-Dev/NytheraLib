@@ -327,6 +327,12 @@ namespace nythera::config {
       : m_appId(std::move(options.appId)), m_displayName(std::move(options.displayName)),
         m_configDir(options.configDir.empty() ? fs::path{} : fs::absolute(options.configDir)),
         m_validator(std::move(options.validator)) {
+    m_additionalWatchFiles.reserve(options.additionalWatchFiles.size());
+    for (const auto& path : options.additionalWatchFiles) {
+      if (!path.empty()) {
+        m_additionalWatchFiles.push_back(fs::absolute(path));
+      }
+    }
     reload(/*notifyReload=*/false);
   }
 
@@ -410,6 +416,18 @@ namespace nythera::config {
     }
     for (const auto& path : loaded.config.loadedFiles) {
       add(path, false);
+    }
+    for (const auto& path : m_additionalWatchFiles) {
+      add(path, false);
+      const fs::path target = canonicalPath(path);
+      if (target != path) {
+        add(target, false);
+      }
+      std::error_code error;
+      const fs::path link = fs::read_symlink(path, error);
+      if (!error) {
+        add(link.is_absolute() ? link : path.parent_path() / link, false);
+      }
     }
 
     constexpr auto mask = IN_CLOSE_WRITE

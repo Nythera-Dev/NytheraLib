@@ -198,6 +198,47 @@ namespace {
     nythera::config::clearApplicationConfigWrites("files"); // Idempotent when already absent.
   }
 
+  void testAdditionalWatchFilesAndSelfWriteSuppression() {
+    const nythera::test::ScopedTestEnv env({.prefix = "nythera-config-monitor-extra"});
+    const fs::path configDir = env.config() / "nythera" / "files";
+    const fs::path rootConfig = configDir / "config.toml";
+    const fs::path searchConfig = configDir / "search" / "config.toml";
+    writeFile(rootConfig, "[files]\ngrid_view = false\n");
+    writeFile(searchConfig, "[options]\nshow_hidden = false\n");
+
+    nythera::config::ApplicationConfigMonitorRegistry registry;
+    auto& monitor = registry.addMonitor({
+        .appId = "files",
+        .displayName = "Nythera Files",
+        .configDir = configDir,
+        .validator = nythera::config::validateFilesConfiguration,
+        .additionalWatchFiles = {searchConfig},
+    });
+    int manualReloads = 0;
+    int silentReloads = 0;
+    monitor.setReloadCallback([&](const auto&, bool manual) {
+      if (manual) {
+        ++manualReloads;
+      } else {
+        ++silentReloads;
+      }
+    });
+
+    // External modification of an additional watched file triggers a manual reload.
+    TEST_CHECK(writeTextFileAtomic(searchConfig, "[options]\nshow_hidden = true\n"));
+    dispatchOnce(registry);
+    TEST_CHECK(manualReloads == 1);
+    TEST_CHECK(silentReloads == 0);
+
+    // In-process self-write of an additional watched file suppresses manual reload notification.
+    const std::string selfContent = "[options]\nshow_hidden = false\n";
+    monitor.recordInProcessSelfWrite(searchConfig, selfContent);
+    TEST_CHECK(writeTextFileAtomic(searchConfig, selfContent));
+    dispatchOnce(registry);
+    TEST_CHECK(manualReloads == 1);
+    TEST_CHECK(silentReloads == 1);
+  }
+
 } // namespace
 
 int main() {
@@ -205,5 +246,6 @@ int main() {
     testMonitorLifecycleIncludesAndSuppression();
     testStartupProblemAndUnsupportedSection();
     testSelfWriteMarkerLifecycle();
+    testAdditionalWatchFilesAndSelfWriteSuppression();
   });
 }

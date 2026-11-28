@@ -72,6 +72,7 @@ namespace nythera::config {
       std::string displayName;
       std::filesystem::path configDir;
       Validator validator;
+      std::vector<std::filesystem::path> additionalWatchFiles;
     };
 
     explicit ApplicationConfigMonitor(Options options);
@@ -104,6 +105,7 @@ namespace nythera::config {
     std::string m_displayName;
     std::filesystem::path m_configDir;
     Validator m_validator;
+    std::vector<std::filesystem::path> m_additionalWatchFiles;
     ReloadCallback m_onReload;
     ProblemCallback m_onProblem;
     std::optional<ConfigurationProblem> m_problem;
