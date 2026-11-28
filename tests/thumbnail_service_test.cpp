@@ -1,6 +1,7 @@
 #include "core/files/directory_scanner.h"
 #include "render/core/image_decoder.h"
 #include "render/core/image_encoder.h"
+#include "render/core/image_file_loader.h"
 #include "render/core/texture_manager.h"
 #include "render/core/thumbnail_service.h"
 #include "test_isolation.h"
@@ -839,6 +840,14 @@ int main() {
       const std::size_t rightIdx = (16U * 64U + 48U) * 4U;
       TEST_CHECK(textures.pixels[rightIdx + 3] == 0);
 
+      const auto native = loadImageFile(aspectSvg.string());
+      TEST_CHECK(native && native->width == 200 && native->height == 100);
+      const auto cropped = loadImageFile(aspectSvg.string(), 64, true);
+      TEST_CHECK(cropped && cropped->width == 32 && cropped->height == 32);
+      TEST_CHECK(cropped->sourceWidth == 64 && cropped->sourceHeight == 32);
+      TEST_CHECK(cropped->rgba[0] == 255 && cropped->rgba[3] == textures.pixels[leftIdx + 3]);
+      TEST_CHECK(cropped->rgba[31U * 4U + 3U] == 0);
+
       // ViewBox-only tall SVG (1:2 aspect ratio).
       const auto viewboxSvg = root / "viewbox-only.svg";
       writeText(
@@ -875,6 +884,17 @@ int main() {
       TEST_CHECK(std::abs(static_cast<int>(textures.pixels[centerIdx + 1]) - 128) <= 6);
       TEST_CHECK(textures.pixels[centerIdx + 2] >= 240);
       TEST_CHECK(textures.pixels[centerIdx + 3] == 255);
+      const auto loaded = loadImageFile(validSvgz.string(), 64);
+      TEST_CHECK(loaded && loaded->width == 64 && loaded->height == 32);
+      TEST_CHECK(loaded->rgba == textures.pixels);
+
+      const auto oversizedSvgz = root / "oversized-output.svgz";
+      std::string paddedSvg = R"SVG(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">)SVG";
+      paddedSvg.append(ThumbnailService::kMaxSvgSourceBytes, ' ');
+      paddedSvg += "</svg>";
+      write(oversizedSvgz, gzipCompress(paddedSvg));
+      const auto oversized = loadImageFile(oversizedSvgz.string(), 16);
+      TEST_CHECK(!oversized && oversized.error() == "decompressed SVGZ exceeds size limit");
 
       // Non-SVG gzip payload named .svgz must fail cleanly.
       const auto fakeSvgz = root / "not-svg.svgz";
@@ -992,6 +1012,9 @@ int main() {
       TEST_CHECK(textures.pixels[centerIdx + 0] <= 10);
       TEST_CHECK(textures.pixels[centerIdx + 1] <= 10);
       TEST_CHECK(textures.pixels[centerIdx + 2] >= 240);
+      const auto loaded = loadImageFile(externalSvg.string());
+      TEST_CHECK(loaded && loaded->width == 64 && loaded->height == 64);
+      TEST_CHECK(loaded->rgba == textures.pixels);
     }
 
     // SVG.6: Concurrent SVG rendering respects memory budget and cancellation is safe.

@@ -60,5 +60,13 @@ int main() {
     ok = check(mentionsSeparator, "missing comma failure should mention separator") && ok;
   }
 
+  image = loadImageFile(
+      "data:image/png,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%208%204'%3E"
+      "%3Crect%20width='8'%20height='4'%20fill='red'/%3E%3C/svg%3E",
+      16
+  );
+  ok = check(image && image->width == 16 && image->height == 8, "SVG bytes should override the declared raster type")
+      && ok;
+
   return ok ? 0 : 1;
 }

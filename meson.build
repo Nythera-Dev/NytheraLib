@@ -337,6 +337,7 @@ _nythera_lib_sources = files(
   'src/render/core/image_file_loader.cpp',
   'src/render/core/shader_program.cpp',
   'src/render/core/stb_image_resize_impl.cpp',
+  'src/render/core/svg_rasterizer.cpp',
   'src/render/core/thumbnail_service.cpp',
   'src/render/core/freedesktop_thumbnail.cpp',
   'src/render/core/image_decoder.cpp',
