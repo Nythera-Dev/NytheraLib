@@ -30,7 +30,8 @@ namespace nythera::config {
           || key == "always_show_tab_bar"
           || key == "open_tabs_in_background"
           || key == "readline_shortcuts"
-          || key == "fzf_search") {
+          || key == "fzf_search"
+          || key == "avoid_redundant_extraction_folders") {
         return node.is_boolean();
       }
       if (key == "preview_mode" || key == "thumbnail_policy") {
