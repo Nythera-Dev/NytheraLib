@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
@@ -17,6 +18,63 @@ namespace nythera::config {
 
   namespace {
     namespace fs = std::filesystem;
+
+    bool validColumnWidths(std::string_view text) {
+      std::size_t count = 0;
+      while (count < filemanager::kFileColumns.size()) {
+        const auto comma = text.find(',');
+        const auto token = text.substr(0, comma);
+        if (token.empty())
+          return false;
+        const auto index = count++;
+        float value = 0.0F;
+        const auto [end, error] = std::from_chars(token.data(), token.data() + token.size(), value);
+        if (error != std::errc{}
+            || end != token.data() + token.size()
+            || !std::isfinite(value)
+            || value < 0.0F
+            || (value == 0.0F && index != 0)
+            || value > 10000.0F)
+          return false;
+        if (comma == std::string_view::npos)
+          return count == filemanager::kDefaultFileColumns.size() || count == filemanager::kFileColumns.size();
+        text.remove_prefix(comma + 1);
+      }
+      return false;
+    }
+
+    bool validColumnLayout(std::string_view text) {
+      std::array<bool, filemanager::kFileColumns.size()> seen{};
+      for (std::size_t i = 0; i < filemanager::kFileColumns.size(); ++i) {
+        const auto comma = text.find(',');
+        auto token = text.substr(0, comma);
+        const bool visible = !token.starts_with('-');
+        if (!visible)
+          token.remove_prefix(1);
+        const auto found = std::ranges::find(filemanager::kFileColumnLabels, token);
+        if (found == filemanager::kFileColumnLabels.end()
+            || (comma == std::string_view::npos) != (i + 1 == filemanager::kFileColumns.size()))
+          return false;
+        const auto index = static_cast<std::size_t>(found - filemanager::kFileColumnLabels.begin());
+        if (seen[index] || (!visible && filemanager::kFileColumns[index] == filemanager::FileColumn::Name))
+          return false;
+        seen[index] = true;
+        if (comma != std::string_view::npos)
+          text.remove_prefix(comma + 1);
+      }
+      return true;
+    }
+
+    bool validSearchColumnLayout(std::string_view text) {
+      const auto location = text.find("Location");
+      if (location == std::string_view::npos || text.contains("Created"))
+        return false;
+      std::string normalized(text);
+      normalized.replace(location, sizeof("Location") - 1, "Created");
+      if (!validColumnLayout(normalized))
+        return false;
+      return normalized.contains("-Accessed");
+    }
 
     bool validPreference(std::string_view key, const toml::node& node) {
       if (key == "search_grid_view"
@@ -73,14 +131,11 @@ namespace nythera::config {
       const bool widthsKey = key == "list_column_widths" || key == "search_column_widths";
       if (widthsKey || key == "list_column_layout" || key == "search_column_layout") {
         const auto text = node.value_exact<std::string_view>();
-        filemanager::FileColumns widths;
-        filemanager::FileColumnLayout layout;
         if (!text)
           return false;
         if (widthsKey)
-          return filemanager::parseFileColumns(*text, widths);
-        return key == "search_column_layout" ? filemanager::parseSearchFileColumnLayout(*text, layout)
-                                             : filemanager::parseFileColumnLayout(*text, layout);
+          return validColumnWidths(*text);
+        return key == "search_column_layout" ? validSearchColumnLayout(*text) : validColumnLayout(*text);
       }
       if (key == "place_order" || key == "hidden_mounts") {
         const auto* array = node.as_array();
